@@ -1,18 +1,20 @@
 # Release 0.1 検証記録
 
+最新結果：公開先`konbuden/Jog`へのコード反映済み。GitHub Actionsで型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功。公開処理のみPages未設定のため停止中。
+
 実データは使用していません。すべて架空の合成記録です。2026-10-23、Node.js 24.19.0 / Linux / システムChromiumで検証。
 
 ## タスク別
 
-| ID  | 主な変更ファイル                                                                                                                                    | 検証結果                                                          | 未対応・制約                                                                |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| T01 | architecture.md、data-specification.md、package.json、設定各種、src/main.tsx、src/app/App.tsx、src/styles/index.css、tests/e2e/navigation.spec.ts   | strict型検査・本番ビルド成功、Chromium画面遷移1件成功             | 初期骨格。機能は後続で実装                                                  |
-| T02 | src/domain/models/run.ts、src/domain/analytics/{running,time}.ts、src/infrastructure/db/database.ts、単体・DBテスト、合成Run                        | Vitest 13件成功、型検査・ビルド成功                               | インポートはT03                                                             |
-| T03 | src/infrastructure/apple-health/_、src/workers/_、src/features/import/ImportDialog.tsx、合成XML、取り込みテスト                                     | Vitest 23件成功、型検査・ビルド成功、Chromium E2E 3件成功         | ZIP64・暗号化・分割ZIP非対応                                                |
-| T04 | src/pages/Dashboard.tsx、src/components/{DistanceChart,RunHistory,format}、App・CSS、dashboard.spec.ts                                              | Vitest 23件、Chromium E2E 5件、型検査・ビルド成功                 | 端末幅の追加検証はT06                                                       |
-| T05 | src/pages/Analysis.tsx、src/components/PaceChart.tsx、App・CSS、analysis.spec.ts                                                                    | Vitest 23件、Chromium E2E 7件、型検査・ビルド成功                 | グラフは12か月、全記録はページング                                          |
-| T06 | tests/e2e/quality.spec.ts、tests/performance/import.large.test.ts、合成XML生成、単体・DBテスト拡充、フォーカス・スキップリンク・CSP・数値解析の修正 | Vitest 28件、大容量1件、Chromium E2E 15件成功、型検査・ビルド成功 | Firefox・WebKitは実行ファイル不足で起動不可。Safari実機・全上限容量は未検証 |
-| T07 | README.md、.github/workflows/pages.yml、public/.nojekyll、仕様・検証記録                                                                            | 型検査・本番ビルド・Vitest 28件・Chromium E2E 15件成功            | リモート作成・push・公開確認はGitHub接続待ち                                |
+| ID  | 主な変更ファイル                                                                                                                                    | 検証結果                                                          | 未対応・制約                                                                                |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| T01 | architecture.md、data-specification.md、package.json、設定各種、src/main.tsx、src/app/App.tsx、src/styles/index.css、tests/e2e/navigation.spec.ts   | strict型検査・本番ビルド成功、Chromium画面遷移1件成功             | 初期骨格。機能は後続で実装                                                                  |
+| T02 | src/domain/models/run.ts、src/domain/analytics/{running,time}.ts、src/infrastructure/db/database.ts、単体・DBテスト、合成Run                        | Vitest 13件成功、型検査・ビルド成功                               | インポートはT03                                                                             |
+| T03 | src/infrastructure/apple-health/_、src/workers/_、src/features/import/ImportDialog.tsx、合成XML、取り込みテスト                                     | Vitest 23件成功、型検査・ビルド成功、Chromium E2E 3件成功         | ZIP64・暗号化・分割ZIP非対応                                                                |
+| T04 | src/pages/Dashboard.tsx、src/components/{DistanceChart,RunHistory,format}、App・CSS、dashboard.spec.ts                                              | Vitest 23件、Chromium E2E 5件、型検査・ビルド成功                 | 端末幅の追加検証はT06                                                                       |
+| T05 | src/pages/Analysis.tsx、src/components/PaceChart.tsx、App・CSS、analysis.spec.ts                                                                    | Vitest 23件、Chromium E2E 7件、型検査・ビルド成功                 | グラフは12か月、全記録はページング                                                          |
+| T06 | tests/e2e/quality.spec.ts、tests/performance/import.large.test.ts、合成XML生成、単体・DBテスト拡充、フォーカス・スキップリンク・CSP・数値解析の修正 | Vitest 28件、大容量1件、Chromium E2E 15件成功、型検査・ビルド成功 | ローカルのFirefox・WebKitは起動不可。3ブラウザ検証はT07のCIで成功。実機・全上限容量は未検証 |
+| T07 | README.md、.github/workflows/pages.yml、public/.nojekyll、仕様・検証記録                                                                            | 型検査・本番ビルド・Vitest 36件・3ブラウザE2E 45件成功            | Pagesの有効化待ち。実デプロイ・公開URL確認は未完了                                          |
 
 ## 必須ケース
 
@@ -41,13 +43,19 @@
 
 ## 最終状態
 
-最終チェック：`npm test` 28件成功、`npm run test:large` 1件成功、`PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --project=chromium` 15件成功。E2Eコマンド内のstrict型検査・本番ビルドも成功。
+検証対象コミット：[`9c06edc84ffc192997da8712cafa21f31cc91c96`](https://github.com/konbuden/Jog/commit/9c06edc84ffc192997da8712cafa21f31cc91c96)。GitHub Actionsの[実行39902487375](https://github.com/konbuden/Jog/actions/runs/39902487375)でverifyジョブ成功。
 
-T07のREADME・Pagesワークフロー・静的公開設定は作成済み。Prettierで整形し、CIに整形チェックも追加。GitHub CLIの認証が無効で、接続済みアカウントの`konbuden/my-running-coach`は404のため、リポジトリ作成・push・実デプロイ・公開URL確認は未実施。
+- 整形チェック、strict型検査、本番ビルド成功
+- Vitest 36件成功
+- 100 MiB合成XML/ZIPの大容量テスト1件成功
+- Chromium 15件・Firefox 15件・WebKit 15件、合計45件成功
+- 検証済みのdist成果物をPages用にアップロード済み
 
-Firefox / WebKitの起動を試みたところ、実行ファイルがないため開始できなかった。機能テストの成功としては数えない。CIはブラウザをインストールして3エンジンを必須実行し、成功後だけ公開する構成。
+公開先は利用者が指定した非公開リポジトリ`konbuden/Jog`。接続済みGitHubツール経由でmainへ反映した。アプリ名・パッケージ名を維持し、baseとテストURLは`/Jog/`へ変更。公開範囲は変更していない。
 
-公開済みとは扱わず、GitHub認証・リポジトリ接続と3ブラウザCI成功後に公開URLを検証する必要がある。
+deployジョブは`actions/configure-pages@v5`で「Get Pages site failed」「Not Found」となった。GitHub Pagesの有効化とSourceのGitHub Actions設定が必要。非公開リポジトリでPagesが使えるかは契約プランに依存する。設定完了後は既存の検証済み成果物を使って公開ジョブを再実行できる。実デプロイ・公開URL確認は未完了。
+
+以下は作業中の確認履歴。最新状態は本節を参照。
 
 ## 公開再開時の確認
 
@@ -59,4 +67,10 @@ Firefox / WebKitの起動を試みたところ、実行ファイルがないた�
 
 ## Jogへの公開先変更
 
-利用者指定の`konbuden/Jog`を接続ツールで確認。空の非公開リポジトリで、管理・書き込み権限あり。アプリ・パッケージ名を維持し、Viteのbase、PlaywrightのURL、起動・公開手順を`/Jog/`へ変更した。Pagesの利用可否・設定は未確認で、公開範囲は変更しない。ローカル再検証とソース反映の結果は後続に記録する。
+利用者指定の`konbuden/Jog`を接続ツールで確認。空の非公開リポジトリで、管理・書き込み権限あり。アプリ・パッケージ名を維持し、Viteのbase、PlaywrightのURL、起動・公開手順を`/Jog/`へ変更した。Pagesの利用可否・設定は未確認で、公開範囲は変更しない。ローカル再検証とソース反映を完了し、最終結果を「最終状態」に記載した。
+
+## CIで判明した差異と対応
+
+初回の3ブラウザ実行では44件成功。WebKitがFile読み込みを同一オリジンのblob URLとして報告し、外部通信検出テストが誤判定した。URLのオリジンを比較するよう修正し、別ホスト・別ポート・外部blobを検出しつつ、同一オリジンblob・埋め込みdata URLを区別する8件の回帰テストを追加。アプリ本体の通信設定は緩和していない。
+
+CIのUbuntu Azure HTTPミラーが低速だったため、依存導入とブラウザ取得を分離し、それぞれ5分の上限を設定。公式Ubuntu HTTPSアーカイブへ切り替えた最終実行で準備と全検証が成功した。長時間の準備中だった旧実行は新コミットのconcurrency設定によりキャンセルされた。

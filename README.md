@@ -51,7 +51,7 @@ XMLは512 MiB、ZIPは128 MiB、展開後のXMLは512 MiBまでです。ZIPは10
 
 安定したUUIDがないランで距離等が後から変更されると、別の記録になる場合があります。異なる出典・機器の同一活動は自動統合しません。XMLの距離は`totalDistance`またはWorkout内の対応する距離統計が必要です。
 
-対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。現在の実測はChromiumのみで、Firefox・WebKit/iPhone/iPad実機は未検証です。CIではChromium・Firefox・WebKitの成功を公開条件にしています。
+対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2E 45件が成功しています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
 
 ## テスト
 
@@ -92,6 +92,6 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --proj
 
 Jogは現在非公開です。設定画面にUpgrade等が表示される場合、契約プランで非公開リポジトリのPagesが利用できない可能性があります。公開範囲は自動変更しません。利用可能な契約にするか、利用者が公開範囲を決める必要があります。
 
-GitHub接続でJogの管理・書き込み権限を確認済みです。環境のCLI認証は無効のため、接続済みGitHubツール経由でソースを反映します。トークンをチャットに貼る必要はありません。Pagesが有効になっている場合の標準公開先は`https://konbuden.github.io/Jog/`です。実際の公開成否はActionsと公開URLの確認後に判断します。
+GitHub接続でJogの管理・書き込み権限を確認済みです。環境のCLI認証は無効のため、接続済みGitHubツール経由でソースを反映します。トークンをチャットに貼る必要はありません。Pagesが有効になっている場合の標準公開先は`https://konbuden.github.io/Jog/`です。[検証実行](https://github.com/konbuden/Jog/actions/runs/39902487375)では、型検査・ビルド・整形チェック・単体テスト36件・大容量テスト1件・3ブラウザE2E 45件が成功しました。公開ジョブはPages未設定のNot Foundで停止しています。設定後は失敗した公開ジョブだけを再実行できます。公開URLの確認は未実施です。
 
 この実行環境ではPlaywrightの配布先`cdn.playwright.dev`および`playwright.download.prss.microsoft.com`への取得が通信ポリシーにより403 `Domain forbidden`となりました。制限を回避せず、残りのFirefox・WebKit検証はGitHub Actionsで行います。
