@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, FileUp, ShieldCheck, X, AlertCircle } from 'lucide-react';
 import type { ImportPreview, ImportRequest, ImportResponse } from '../../workers/messages';
 import { formatDate } from '../../components/format';
-import { IMPORT_FILE_MAX_MB } from '../../infrastructure/apple-health/import-limits';
+import {
+  IMPORT_EXPANDED_MAX_GB,
+  IMPORT_FILE_MAX_MB,
+} from '../../infrastructure/apple-health/import-limits';
 
 export function ImportDialog({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -107,6 +110,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
             <FileUp size={32} />
             <strong>ZIP / export.xmlを選択</strong>
             <span>ZIP・XMLともに{IMPORT_FILE_MAX_MB} MBまで</span>
+            <span>ZIP展開後のXMLは{IMPORT_EXPANDED_MAX_GB} GBまで</span>
             <input
               type="file"
               accept=".zip,.xml"

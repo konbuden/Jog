@@ -49,7 +49,7 @@ npm run preview
 
 保存先は端末・ブラウザ・オリジンごとに独立し、同期しません。ブラウザのデータ削除や保存領域の回収で記録が消えることがあります。元のエクスポートを保管してください。ブラウザを変えた場合は元ファイルから再取り込みできます。
 
-選択するXML・ZIPはどちらも200 MB（200,000,000バイト）まで、ZIP展開後のXMLは512 MiBまでです。ZIPは10,000エントリ・管理情報8 MiBまで。通常ZIPのstored/deflateに対応し、ZIP64・暗号化・分割ZIP・複数export.xmlは非対応です。その場合はexport.xmlを直接選択してください。構文不正のXMLは一部だけ保存しません。未知の単位や欠損データは理由を表示します。
+選択するXML・ZIPはどちらも200 MB（200,000,000バイト）まで、ZIP展開後のXMLは5 GB（5,000,000,000バイト）までです。ZIPは10,000エントリ・管理情報8 MiBまで。通常ZIPとZIP64のstored/deflateに対応します。暗号化・分割ZIP・複数export.xmlは非対応です。展開後のXMLをファイルとして丸ごと保存せず、ランニング記録だけを逐次抽出するため、5 GB分の空き領域を必須とはしません。解析時間と保存容量は記録数・端末性能に依存します。構文不正のXMLは一部だけ保存しません。未知の単位や欠損データは理由を表示します。
 
 安定したUUIDがないランで距離等が後から変更されると、別の記録になる場合があります。異なる出典・機器の同一活動は自動統合しません。XMLの距離は`totalDistance`またはWorkout内の対応する距離統計が必要です。
 
@@ -70,7 +70,7 @@ E2Eは本番ビルドに対して実行します。システムのChromiumだけ
 PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --project=chromium
 ```
 
-`test:large`は100 MiBの合成XMLとZIPに加え、200 MBちょうどのXMLとZIPを一時ディレクトリに生成して解析し、終了後に削除します。計測結果はOSの一時ディレクトリの`my-running-coach-performance.json`へ保存します。詳細は[validation-report.md](validation-report.md)を参照してください。
+`test:large`は100 MiBの合成XMLとZIPに加え、200 MBちょうどのXMLとZIP、5 GBちょうどに展開されるZIP64を一時ディレクトリに生成して解析し、終了後に削除します。計測結果はOSの一時ディレクトリの`my-running-coach-performance.json`と`my-running-coach-zip64-performance.json`へ保存します。詳細は[validation-report.md](validation-report.md)を参照してください。
 
 合成テストデータは`tests/fixtures/synthetic/`に限定しています。実データをリポジトリ、テスト、CI、スクリーンショットに入れないでください。XML/ZIPは原則gitignoreし、合成fixtureのXMLだけを例外としています。
 

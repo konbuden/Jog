@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, it, vi } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
 import { importHealthFile } from '../../src/infrastructure/apple-health/import-file';
+import { syntheticZip64 } from '../fixtures/synthetic/zip64';
 import { HealthParser, identifyRun } from '../../src/infrastructure/apple-health/parser';
 import type { RunCandidate } from '../../src/domain/models/run';
 
@@ -68,6 +69,7 @@ it('破損ZIP・複数XML・XMLなし・未対応ファイルを拒否する', a
 it('CRCが違うZIPを拒否する', async () => {
   const zip = zipSync({ 'export.xml': strToU8(xml) });
   const view = new DataView(zip.buffer);
+  zip[14] = zip[14]! ^ 1;
   for (let i = 0; i < zip.length - 46; i++)
     if (view.getUint32(i, true) === 0x02014b50) {
       zip[i + 16] = zip[i + 16]! ^ 1;
@@ -208,16 +210,9 @@ it.each(['export.xml', 'export.zip'])(
   },
 );
 
-it('ZIPの展開後XMLの512 MiB制限を維持する', async () => {
-  const zip = zipSync({ 'export.xml': strToU8(xml) });
-  const view = new DataView(zip.buffer);
-  for (let i = 0; i < zip.length - 46; i++) {
-    if (view.getUint32(i, true) === 0x02014b50) {
-      view.setUint32(i + 24, 512 * 1024 * 1024 + 1, true);
-      break;
-    }
-  }
+it('ZIPの展開後XMLの5 GB制限を適用する', async () => {
+  const zip = syntheticZip64(xml, { expandedBytes: 5_000_000_001 });
   await expect(importHealthFile(new File([zip], 'export.zip'), async () => {})).rejects.toThrow(
-    '展開後のXMLが512 MiB',
+    '展開後のXMLが5 GB',
   );
 });
