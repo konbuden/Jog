@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { syntheticXml } from '../fixtures/synthetic/xml';
+import { isExternalRequest } from '../helpers/is-external-request';
 
 async function loadSynthetic(page: Page) {
   await page.getByRole('button', { name: 'データをインポート', exact: true }).first().click();
@@ -84,10 +85,10 @@ test('別タブの取り込みと競合しても一時データを消さない',
   await other.close();
 });
 
-test('途中で壊れたXMLを部分保存せず、外部通信もしない', async ({ page }) => {
+test('途中で壊れたXMLを部分保存せず、外部通信もしない', async ({ page, baseURL }) => {
   const external: string[] = [];
   page.on('request', (request) => {
-    if (!request.url().startsWith('http://127.0.0.1:4173/')) external.push(request.url());
+    if (isExternalRequest(request.url(), baseURL!)) external.push(request.url());
   });
   await page.goto('./');
   await page.getByRole('button', { name: 'データをインポート', exact: true }).first().click();
