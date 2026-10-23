@@ -24,7 +24,12 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium firefox webkit
+      - name: Install browser system dependencies
+        timeout-minutes: 5
+        run: npx playwright install-deps chromium firefox webkit
+      - name: Download test browsers
+        timeout-minutes: 5
+        run: npx playwright install chromium firefox webkit
       - run: npm run format:check
       - run: npm test
       - run: npm run test:large
