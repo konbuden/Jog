@@ -9,7 +9,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Zip, ZipDeflate } from 'fflate';
+import { Zip, ZipDeflate, ZipPassThrough, strToU8 } from 'fflate';
 import { expect, it } from 'vitest';
 import { importHealthFile } from '../../src/infrastructure/apple-health/import-file';
 import { syntheticXml } from '../fixtures/synthetic/xml';
@@ -80,6 +80,80 @@ it('100 MiBの合成XMLと同内容のZIPを逐次解析する', async () => {
       join(tmpdir(), 'my-running-coach-performance.json'),
       JSON.stringify(measurements, null, 2),
     );
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+it('200 MBちょうどの合成XML・ZIPを逐次解析する', async () => {
+  const directory = mkdtempSync(join(tmpdir(), 'mrc-boundary-'));
+  const size = 200_000_000;
+  const xmlPath = join(directory, 'export.xml');
+  const zipPath = join(directory, 'export.zip');
+  const payload = strToU8(syntheticXml(24));
+  try {
+    const xmlFd = openSync(xmlPath, 'w');
+    const padding = new Uint8Array(65_536).fill(32);
+    writeSync(xmlFd, payload.subarray(0, payload.length - '</HealthData>'.length));
+    let remaining = size - payload.length;
+    // Short ignored elements keep XML token limits in force while padding to the exact size.
+    const ignored = strToU8('<Record/>'.repeat(4096));
+    while (remaining >= ignored.length) {
+      writeSync(xmlFd, ignored);
+      remaining -= ignored.length;
+    }
+    writeSync(xmlFd, padding.subarray(0, remaining));
+    writeSync(xmlFd, '</HealthData>');
+    closeSync(xmlFd);
+
+    const names = ['apple_health_export/export.xml', 'apple_health_export/routes/ignored.gpx'];
+    // Measure streaming headers/descriptors with empty padding before writing the large archive.
+    let overhead = 0;
+    const measure = new Zip((error, bytes) => {
+      if (error) throw error;
+      overhead += bytes.length;
+    });
+    for (const [name, data] of [
+      [names[0]!, payload],
+      [names[1]!, new Uint8Array()],
+    ] as const) {
+      const entry = new ZipPassThrough(name);
+      measure.add(entry);
+      entry.push(data, true);
+    }
+    measure.end();
+    const zipFd = openSync(zipPath, 'w');
+    const archive = new Zip((error, bytes) => {
+      if (error) throw error;
+      writeSync(zipFd, bytes);
+    });
+    const health = new ZipPassThrough(names[0]!);
+    archive.add(health);
+    health.push(payload, true);
+    const unrelated = new ZipPassThrough(names[1]!);
+    archive.add(unrelated);
+    remaining = size - overhead;
+    while (remaining > 0) {
+      const length = Math.min(remaining, padding.length);
+      remaining -= length;
+      unrelated.push(padding.subarray(0, length), remaining === 0);
+    }
+    archive.end();
+    closeSync(zipFd);
+
+    for (const [path, name] of [
+      [xmlPath, 'export.xml'],
+      [zipPath, 'export.zip'],
+    ]) {
+      const input = Object.assign(await openAsBlob(path!), { name: name! });
+      expect(input.size).toBe(size);
+      let count = 0;
+      const report = await importHealthFile(input, async (runs) => {
+        count += runs.length;
+      });
+      expect(report.runningCount).toBe(24);
+      expect(count).toBe(24);
+    }
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }

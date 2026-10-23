@@ -6,6 +6,7 @@ const fixture = fileURLToPath(new URL('../fixtures/synthetic/export.xml', import
 test('実Workerで解析し、確認後だけ保存し、再取り込みで重複しない', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: 'データをインポート', exact: true }).first().click();
+  await expect(page.getByText('ZIP・XMLともに200 MBまで')).toBeVisible();
   await page.getByLabel('Apple Healthファイル').setInputFiles(fixture);
   await expect(page.getByRole('heading', { name: '保存前の確認' })).toBeVisible();
   await expect(page.getByText('2026/10/01 〜 2026/10/03', { exact: false })).toBeVisible();

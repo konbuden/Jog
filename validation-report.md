@@ -1,8 +1,18 @@
 # Release 0.1 検証記録
 
-最新結果：**[My Running Coach](https://konbuden.github.io/Jog/)を公開済み**。2026年10月23日14:09（日本時間）にGitHub Pagesのdeployジョブが成功。型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功しています。
+初回公開結果：**[My Running Coach](https://konbuden.github.io/Jog/)を公開済み**。2026年10月23日14:09（日本時間）にGitHub Pagesのdeployジョブが成功。型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功しています。
 
 実データは使用していません。すべて架空の合成記録です。2026-10-23、Node.js 24.19.0 / Linux / システムChromiumで検証。
+
+## 200 MB上限への変更
+
+選択するZIP・XMLの上限を200 MB（200,000,000バイト）へ統一。上限値を独立した定数にし、Workerの判定・画面表示・容量エラーを共有した。ZIP展開後のXMLは既存の512 MiB上限を維持し、逐次解析と項目数・トークンの制限も維持した。
+
+変更ファイル：`src/infrastructure/apple-health/{import-file,import-limits}.ts`、`src/features/import/ImportDialog.tsx`、単体・大容量・E2Eテスト、README、本仕様・検証記録。
+
+ローカル検証：単体39件、大容量2件、Chromium E2E 15件、strict型検査・本番ビルド・整形チェック成功。200 MBちょうどのXMLとZIPを一時ファイルとして生成し、各24件の合成ランを解析した。199,999,999／200,000,000バイトで読み込みを開始すること、200,000,001バイトでは読み込み前にエラーになることを両形式で確認。512 MiBを超える展開サイズのZIPも拒否する。
+
+3ブラウザのCI検証と公開版への反映は、この変更のmain反映後に実行する。実在の健康情報は使用していない。iPhone・iPad実機および公開URLでの直接表示確認は引き続き未実施。
 
 ## タスク別
 

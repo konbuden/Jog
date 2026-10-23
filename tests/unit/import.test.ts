@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { strToU8, zipSync } from 'fflate';
 import { importHealthFile } from '../../src/infrastructure/apple-health/import-file';
 import { HealthParser, identifyRun } from '../../src/infrastructure/apple-health/parser';
@@ -167,13 +167,10 @@ it('明示的UUIDは距離やdeviceの変化があっても同じIDになる', a
   expect(first.runs[0]?.id).toBe(second.runs[0]?.id);
 });
 
-it('過大なXMLトークンと容量超過を拒否する', async () => {
+it('過大なXMLトークンを拒否する', async () => {
   await expect(parse(`<HealthData><!--${'x'.repeat(400_000)}--></HealthData>`)).rejects.toThrow(
     '要素サイズ',
   );
-  const oversized = file('<HealthData/>');
-  Object.defineProperty(oversized, 'size', { value: 512 * 1024 * 1024 + 1 });
-  await expect(importHealthFile(oversized, async () => {})).rejects.toThrow('512 MiB');
 });
 
 it('時間欠損を開始終了差で埋めず、距離の不一致は警告する', async () => {
@@ -186,4 +183,41 @@ it('時間欠損を開始終了差で埋めず、距離の不一致は警告す�
   );
   expect(result.runs[0]?.distanceMeters).toBe(5000);
   expect(Object.keys(result.report.warnings).some((key) => key.includes('差'))).toBe(true);
+});
+
+it.each(['export.xml', 'export.zip'])(
+  '%sは200 MBの直前・ちょうどを読み込み、超過は読み込まない',
+  async (name) => {
+    for (const size of [199_999_999, 200_000_000, 200_000_001]) {
+      const input = file('<HealthData/>', name);
+      Object.defineProperty(input, 'size', { value: size });
+      const reachedRead = new Error('synthetic read boundary');
+      const read = vi.spyOn(input, 'slice').mockImplementation(() => {
+        throw reachedRead;
+      });
+      const onBatch = vi.fn();
+      if (size <= 200_000_000) {
+        await expect(importHealthFile(input, onBatch)).rejects.toBe(reachedRead);
+        expect(read).toHaveBeenCalled();
+      } else {
+        await expect(importHealthFile(input, onBatch)).rejects.toThrow('200 MB');
+        expect(read).not.toHaveBeenCalled();
+      }
+      expect(onBatch).not.toHaveBeenCalled();
+    }
+  },
+);
+
+it('ZIPの展開後XMLの512 MiB制限を維持する', async () => {
+  const zip = zipSync({ 'export.xml': strToU8(xml) });
+  const view = new DataView(zip.buffer);
+  for (let i = 0; i < zip.length - 46; i++) {
+    if (view.getUint32(i, true) === 0x02014b50) {
+      view.setUint32(i + 24, 512 * 1024 * 1024 + 1, true);
+      break;
+    }
+  }
+  await expect(importHealthFile(new File([zip], 'export.zip'), async () => {})).rejects.toThrow(
+    '展開後のXMLが512 MiB',
+  );
 });

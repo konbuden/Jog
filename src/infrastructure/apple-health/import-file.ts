@@ -2,13 +2,8 @@ import { ImportError } from './errors';
 import { Unzip, UnzipInflate, UnzipPassThrough } from 'fflate';
 import { HealthParser, identifyRun, type ParseReport } from './parser';
 import type { RunCandidate } from '../../domain/models/run';
+import { IMPORT_FILE_MAX_MB, IMPORT_LIMITS } from './import-limits';
 
-export const IMPORT_LIMITS = {
-  xmlBytes: 512 * 1024 * 1024,
-  zipBytes: 128 * 1024 * 1024,
-  zipEntries: 10_000,
-  centralDirectoryBytes: 8 * 1024 * 1024,
-};
 const isExport = (name: string) =>
   /(^|\/)export\.xml$/i.test(name) && !name.split('/').includes('..');
 const crcTable = Uint32Array.from({ length: 256 }, (_, value) => {
@@ -80,7 +75,7 @@ async function zipMetadata(file: Blob) {
         crc: central.getUint32(position + 16, true),
         size: central.getUint32(position + 24, true),
       };
-      if (target.size > IMPORT_LIMITS.xmlBytes)
+      if (target.size > IMPORT_LIMITS.expandedXmlBytes)
         throw new ImportError('展開後のXMLが512 MiBを超えています。');
     }
     position += 46 + nameLength + extraLength + commentLength;
@@ -123,12 +118,8 @@ export async function importHealthFile(
     xml = /\.xml$/i.test(file.name);
   if (!zip && !xml) throw new ImportError('ZIPまたはXMLファイルを選択してください。');
   if (file.size === 0) throw new ImportError('ファイルが空です。');
-  if (file.size > (zip ? IMPORT_LIMITS.zipBytes : IMPORT_LIMITS.xmlBytes))
-    throw new ImportError(
-      zip
-        ? 'ZIPは128 MiBまで対応しています。export.xmlを直接選択してください。'
-        : 'XMLは512 MiBまで対応しています。',
-    );
+  if (file.size > IMPORT_LIMITS.fileBytes)
+    throw new ImportError(`ZIP・XMLは${IMPORT_FILE_MAX_MB} MBまで対応しています。`);
   const pending: Parameters<typeof identifyRun>[0][] = [];
   const parser = new HealthParser((run) => pending.push(run));
   const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -136,7 +127,7 @@ export async function importHealthFile(
     crc = 0xffffffff;
   const consume = (chunk: Uint8Array) => {
     expanded += chunk.length;
-    if (expanded > IMPORT_LIMITS.xmlBytes)
+    if (expanded > IMPORT_LIMITS.expandedXmlBytes)
       throw new ImportError('展開後のXMLが512 MiBを超えています。');
     if (zip) crc = updateCrc(crc, chunk);
     for (let offset = 0; offset < chunk.length; offset += 65_536)
