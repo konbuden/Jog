@@ -1,5 +1,7 @@
 # Release 0.1 検証記録
 
+最新結果：200 MB上限への変更を公開済み。GitHub Actionsで単体39件・大容量2件・3ブラウザE2E 45件が成功し、2026年10月23日14:48（日本時間）にdeployジョブも成功しました。
+
 初回公開結果：**[My Running Coach](https://konbuden.github.io/Jog/)を公開済み**。2026年10月23日14:09（日本時間）にGitHub Pagesのdeployジョブが成功。型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功しています。
 
 実データは使用していません。すべて架空の合成記録です。2026-10-23、Node.js 24.19.0 / Linux / システムChromiumで検証。
@@ -12,7 +14,7 @@
 
 ローカル検証：単体39件、大容量2件、Chromium E2E 15件、strict型検査・本番ビルド・整形チェック成功。200 MBちょうどのXMLとZIPを一時ファイルとして生成し、各24件の合成ランを解析した。199,999,999／200,000,000バイトで読み込みを開始すること、200,000,001バイトでは読み込み前にエラーになることを両形式で確認。512 MiBを超える展開サイズのZIPも拒否する。
 
-3ブラウザのCI検証と公開版への反映は、この変更のmain反映後に実行する。実在の健康情報は使用していない。iPhone・iPad実機および公開URLでの直接表示確認は引き続き未実施。
+[GitHub Actions実行39907528477](https://github.com/konbuden/Jog/actions/runs/39907528477)で単体39件・大容量2件・3ブラウザE2E 45件、整形・型検査・ビルドが成功。検証対象コミットは`1f2f171139af385f5a72fb23596f16ace1248b78`。deployジョブ`120263683656`のログに2026-10-23 05:48:45 UTC（14:48 JST）の`Reported success!`と公開URL https://konbuden.github.io/Jog/ を確認した。実在の健康情報は使用していない。iPhone・iPad実機および公開URLでの直接表示確認は引き続き未実施。
 
 ## タスク別
 
@@ -51,7 +53,7 @@
 
 各読み込みチャンク後のサンプリング値で、瞬間ピークの保証ではありません。Nodeのプロセス・コンプレッサー生成・GCの影響を含み、Safari/iPadでのメモリ上限や実ファイルの最大対応を保証しません。ZIP展開チャンク、XMLトークン、全展開量に独立した上限を設けています。大量のWorkoutを含むデータではDB容量と保存時間も増えます。
 
-## 最終状態
+## 初回公開時の最終状態
 
 検証対象コミット：[`9c06edc84ffc192997da8712cafa21f31cc91c96`](https://github.com/konbuden/Jog/commit/9c06edc84ffc192997da8712cafa21f31cc91c96)。GitHub Actionsの[実行39902487375](https://github.com/konbuden/Jog/actions/runs/39902487375)でverify・deployジョブ成功。
 

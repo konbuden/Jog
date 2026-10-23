@@ -90,4 +90,4 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --proj
 
 2026年10月23日14:09（日本時間）、GitHub Pagesへの公開が成功しました。利用者がリポジトリをPublicに設定し、Pagesを有効にした後、検証済みの成果物を公開しています。公開先は **https://konbuden.github.io/Jog/** です。
 
-[GitHub Actionsの実行結果](https://github.com/konbuden/Jog/actions/runs/39902487375)：整形チェック・strict型検査・本番ビルド・単体テスト36件・大容量テスト1件・3ブラウザE2E 45件が成功し、deployジョブも成功しました。検証内容と制約は[validation-report.md](validation-report.md)に記載しています。
+2026年10月23日14:48（日本時間）、取り込み上限をZIP・XMLともに200 MBへ変更した版を公開しました。[GitHub Actionsの実行結果](https://github.com/konbuden/Jog/actions/runs/39907528477)：整形チェック・strict型検査・本番ビルド・単体テスト39件・大容量テスト2件・3ブラウザE2E 45件が成功し、deployジョブも成功しました。検証内容と制約は[validation-report.md](validation-report.md)に記載しています。
