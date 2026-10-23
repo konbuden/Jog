@@ -1,0 +1,10 @@
+node_modules/
+dist/
+playwright-report/
+test-results/
+.env*
+*.zip
+*.xml
+!tests/fixtures/synthetic/*.xml
+health-data/
+*.local
