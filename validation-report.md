@@ -1,5 +1,7 @@
 # Release 0.1 検証記録
 
+最新結果：ZIP 200 MB・展開後XML 5 GB対応版を公開済み。GitHub Actionsで単体61件・大容量3件・3ブラウザE2E 48件が成功し、2026年10月23日17:25（日本時間）にdeployジョブも成功しました。
+
 200 MB版の公開結果：200 MB上限への変更を公開済み。GitHub Actionsで単体39件・大容量2件・3ブラウザE2E 45件が成功し、2026年10月23日14:48（日本時間）にdeployジョブも成功しました。
 
 初回公開結果：**[My Running Coach](https://konbuden.github.io/Jog/)を公開済み**。2026年10月23日14:09（日本時間）にGitHub Pagesのdeployジョブが成功。型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功しています。
@@ -18,7 +20,7 @@ ZIPの管理情報を上限内で読み、対象XMLの圧縮位置・サイズ�
 
 5 GB実測：合成XMLを小さなブロックから圧縮し、ZIP64だけを一時ディレクトリに生成。ZIP 22,098,748バイトからXML 5,000,000,000バイトを逐次解析し、合成ラン24件の抽出とCRC一致を確認。解析142.48秒、プロセスRSS最大266.1 MiB、開始前からのRSS増加183.2 MiB、JSヒープ増加85.5 MiB。圧縮生成の時間は解析秒数に含まない。チャンク単位のサンプリングで、実機の上限を保証する値ではない。5 GBのXML自体はディスクへ書き出していない。
 
-3ブラウザのCI検証と公開はmain反映後に実行する。iPhone・iPad実機での5 GB取り込みは未検証。実データは使用していない。
+[GitHub Actions実行39923570883](https://github.com/konbuden/Jog/actions/runs/39923570883)で単体61件・大容量3件・Chromium／Firefox／WebKit各16件、合計48件のE2E、整形・型検査・本番ビルドが成功。検証対象コミットは`86d2e01cb94209d55224ae3166ac284428a355d3`。deployジョブ`120317372452`で2026-10-23 08:25:32 UTC（17:25 JST）の`Reported success!`と公開URL https://konbuden.github.io/Jog/ を確認した。iPhone・iPad実機での5 GB取り込みは未検証。実データは使用していない。
 
 ## 200 MB上限への変更（過去の結果）
 

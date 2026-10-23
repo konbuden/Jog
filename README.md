@@ -53,7 +53,7 @@ npm run preview
 
 安定したUUIDがないランで距離等が後から変更されると、別の記録になる場合があります。異なる出典・機器の同一活動は自動統合しません。XMLの距離は`totalDistance`またはWorkout内の対応する距離統計が必要です。
 
-対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2E 45件が成功しています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
+対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2E 48件が成功しています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
 
 ## テスト
 
@@ -90,4 +90,4 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --proj
 
 2026年10月23日14:09（日本時間）、GitHub Pagesへの公開が成功しました。利用者がリポジトリをPublicに設定し、Pagesを有効にした後、検証済みの成果物を公開しています。公開先は **https://konbuden.github.io/Jog/** です。
 
-2026年10月23日14:48（日本時間）、取り込み上限をZIP・XMLともに200 MBへ変更した版を公開しました。[GitHub Actionsの実行結果](https://github.com/konbuden/Jog/actions/runs/39907528477)：整形チェック・strict型検査・本番ビルド・単体テスト39件・大容量テスト2件・3ブラウザE2E 45件が成功し、deployジョブも成功しました。検証内容と制約は[validation-report.md](validation-report.md)に記載しています。
+2026年10月23日17:25（日本時間）、ZIPの200 MB上限を維持し、展開後XMLを5 GBまで受け付ける版を公開しました。[GitHub Actionsの実行結果](https://github.com/konbuden/Jog/actions/runs/39923570883)：整形チェック・strict型検査・本番ビルド・単体テスト61件・大容量テスト3件・3ブラウザE2E 48件が成功し、deployジョブも成功しました。大容量テストでは5 GBちょうどのXMLを含むZIP64を解析しています。検証内容と制約は[validation-report.md](validation-report.md)に記載しています。
