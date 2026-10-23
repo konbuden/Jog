@@ -59,7 +59,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         }
         if (message.type === 'complete') {
           setResult(
-            `${message.added}件を保存しました。重複${message.duplicates}件${message.conflicts ? `（内容の差異${message.conflicts}件・既存値を保持）` : ''}。`,
+            `${message.added}件を保存しました。重複${message.duplicates}件${message.updated ? `・詳細追加${message.updated}件` : ''}${message.conflicts ? `（内容の差異${message.conflicts}件・既存値を保持）` : ''}。`,
           );
           setPhase('complete');
         }
@@ -182,19 +182,27 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
               </ul>
             </div>
           )}
+          {preview.enhancedCount > 0 && (
+            <p className="notice">
+              既存の{preview.enhancedCount}
+              件にコース・追加指標を補います。距離・時間・心拍の既存値は保持します。
+            </p>
+          )}
           <p className="muted">
             心拍はWorkout内に平均値がある場合のみ保存します。ここではまだ記録は追加されていません。
           </p>
           <button
             className="primary-button"
-            disabled={preview.newCount === 0 || cancelling}
+            disabled={preview.newCount + preview.enhancedCount === 0 || cancelling}
             onClick={() => {
               setPhase('saving');
               send({ type: 'confirm' });
             }}
           >
             <Check size={17} />
-            {preview.newCount}件を保存する
+            {preview.enhancedCount
+              ? `${preview.newCount}件を保存・${preview.enhancedCount}件の詳細を追加`
+              : `${preview.newCount}件を保存する`}
           </button>
         </div>
       )}

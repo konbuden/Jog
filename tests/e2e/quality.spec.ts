@@ -16,6 +16,7 @@ async function loadSynthetic(page: Page) {
 test('直近10件と分析ページの20件ずつの表示', async ({ page }) => {
   await page.goto('./');
   await loadSynthetic(page);
+  await page.getByLabel('対象月の選択方法').selectOption('all');
   await expect(page.locator('.run-table tbody tr')).toHaveCount(10);
   await expect(page.locator('.run-table tbody tr').first()).toContainText('2026/10/13');
   await page.getByRole('link', { name: '走力分析', exact: true }).click();

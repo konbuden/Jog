@@ -16,7 +16,8 @@ export function PaceChart({
   );
   const min = values.length ? Math.max(0, Math.floor(Math.min(...values) / 30) * 30 - 30) : 300;
   const max = values.length ? Math.ceil(Math.max(...values) / 30) * 30 + 30 : 480;
-  const x = (index: number) => 57 + (index / Math.max(1, data.length - 1)) * 483;
+  const x = (index: number) =>
+    data.length === 1 ? 298 : 57 + (index / Math.max(1, data.length - 1)) * 483;
   const y = (value: number) => 25 + ((value - min) / (max - min)) * 140;
   let connected = false;
   const path = data
@@ -60,9 +61,12 @@ export function PaceChart({
                 </title>
               </circle>
             )}
-            {(index % 2 === 0 || index === data.length - 1) && (
+            {(index % Math.max(1, Math.ceil(data.length / 6)) === 0 ||
+              index === data.length - 1) && (
               <text x={x(index)} y="195" textAnchor="middle" className="axis-label">
-                {Number(item.month.slice(5))}月
+                {data.length > 12
+                  ? item.month.replace('-', '/')
+                  : `${Number(item.month.slice(5))}月`}
               </text>
             )}
           </g>

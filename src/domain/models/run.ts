@@ -14,6 +14,7 @@ export interface Run {
   distanceOrigin: 'workout' | 'statistics';
   heartRateOrigin: 'workout-statistics' | null;
   importedAt: string;
+  details?: RunDetails;
 }
 
 export type RunCandidate = Omit<Run, 'importedAt'>;
@@ -26,4 +27,27 @@ export interface RunFilter {
   minHeartRate?: number;
   maxHeartRate?: number;
   missingHeartRateOnly?: boolean;
+}
+
+export interface RunDetails {
+  averageCadenceSpm?: number;
+  cadenceOrigin?: 'statistics' | 'steps-duration';
+  totalSteps?: number;
+  activeEnergyKcal?: number;
+  averagePowerWatts?: number;
+  averageStrideLengthMeters?: number;
+  averageGroundContactMilliseconds?: number;
+  averageVerticalOscillationCentimeters?: number;
+  maximumHeartRateBpm?: number;
+  elevationAscendedMeters?: number;
+  indoor?: boolean;
+  workoutName?: string;
+  routeFiles?: string[];
+}
+export interface RunRoute {
+  id: string;
+  segments: [number, number][][];
+  pointCount: number;
+  sampled: boolean;
+  incomplete?: boolean;
 }

@@ -6,9 +6,13 @@ import { formatDate, formatDuration, formatHeartRate, formatKm, formatPace } fro
 export function RunHistory({
   runs,
   analysis = false,
+  onSelect,
+  selectedId,
 }: {
   runs: readonly Run[];
   analysis?: boolean;
+  onSelect?: (run: Run) => void;
+  selectedId?: string;
 }) {
   if (runs.length === 0)
     return (
@@ -55,6 +59,16 @@ export function RunHistory({
                     </small>
                   </span>
                 </span>
+                {onSelect && (
+                  <button
+                    className="text-button run-detail-trigger"
+                    aria-label={`${formatDate(run.startTime)}の詳細`}
+                    aria-pressed={run.id === selectedId}
+                    onClick={() => onSelect(run)}
+                  >
+                    詳細を見る
+                  </button>
+                )}
               </td>
               <td className="distance-cell">
                 {formatKm(run.distanceMeters)} <span>km</span>

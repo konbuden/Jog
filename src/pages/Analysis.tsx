@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,10 +9,10 @@ import {
 } from 'lucide-react';
 import type { Run, RunFilter } from '../domain/models/run';
 import { filterRuns, monthlySummary, summarize } from '../domain/analytics/running';
-import { monthKey, recentMonths } from '../domain/analytics/time';
 import { formatHeartRate, formatKm, formatPace } from '../components/format';
 import { PaceChart } from '../components/PaceChart';
 import { RunHistory } from '../components/RunHistory';
+import { RunDetailsPanel } from '../features/run-details/RunDetailsPanel';
 
 const initial = { distance: 'all', heart: 'all', from: '', through: '' };
 const distanceBands: Record<string, RunFilter> = {
@@ -31,10 +31,22 @@ const heartBands: Record<string, RunFilter> = {
   missing: { missingHeartRateOnly: true },
 };
 
-export function Analysis({ runs }: { runs: readonly Run[] }) {
+export function Analysis({
+  runs,
+  months,
+  periodKey,
+}: {
+  runs: readonly Run[];
+  months: string[];
+  periodKey: string;
+}) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [filters, setFilters] = useState(initial);
   const [page, setPage] = useState(0);
-  const [endMonth, setEndMonth] = useState('');
+  useEffect(() => {
+    setPage(0);
+    setSelectedId(null);
+  }, [periodKey]);
   const invalidDates = Boolean(filters.from && filters.through && filters.from > filters.through);
   const filtered = useMemo(
     () =>
@@ -49,14 +61,6 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
     [runs, filters, invalidDates],
   );
   const summary = useMemo(() => summarize(filtered), [filtered]);
-  const chartMonth =
-    endMonth ||
-    filters.through.slice(0, 7) ||
-    (filtered[0] ? monthKey(filtered[0].startTime) : monthKey(new Date()));
-  const months = useMemo(
-    () => recentMonths(new Date(`${chartMonth}-15T12:00:00+09:00`), 12),
-    [chartMonth],
-  );
   const series = useMemo(() => monthlySummary(filtered, months), [filtered, months]);
   const heartSeries = useMemo(
     () => monthlySummary(filterRuns(filtered, { minHeartRate: 130, maxHeartRate: 140 }), months),
@@ -67,7 +71,6 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
   const update = (key: keyof typeof initial, value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(0);
-    setEndMonth('');
   };
   return (
     <>
@@ -82,7 +85,6 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
             onClick={() => {
               setFilters(initial);
               setPage(0);
-              setEndMonth('');
             }}
           >
             <RotateCcw size={13} />
@@ -168,24 +170,9 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
         <div>
           <span className="section-kicker">ペースの変化</span>
           <span className="timezone-label">
-            表示期間：{months[0]} 〜 {chartMonth}
+            表示期間：{months[0] ?? '—'} 〜 {months.at(-1) ?? '—'}
           </span>
         </div>
-        <label className="month-select">
-          <span aria-hidden="true">
-            最終月 {chartMonth.slice(0, 4)}年{Number(chartMonth.slice(5))}月
-          </span>
-          <input
-            type="month"
-            aria-label="推移の最終月"
-            value={chartMonth}
-            min="1900-01"
-            max="9999-12"
-            onChange={(event) => {
-              if (/^\d{4}-\d{2}$/.test(event.target.value)) setEndMonth(event.target.value);
-            }}
-          />
-        </label>
       </div>
       <div className="analysis-charts">
         <section className="panel">
@@ -197,7 +184,7 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
               </h2>
               <p>総時間 ÷ 総距離から計算した平均</p>
             </div>
-            <span className="subtle-badge">12か月</span>
+            <span className="subtle-badge">{months.length}か月</span>
           </div>
           <PaceChart data={series} label="月別平均ペース" />
         </section>
@@ -226,7 +213,12 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
           <span className="subtle-badge">{filtered.length}件</span>
         </div>
         {filtered.length ? (
-          <RunHistory runs={filtered.slice(safePage * 20, safePage * 20 + 20)} analysis />
+          <RunHistory
+            runs={filtered.slice(safePage * 20, safePage * 20 + 20)}
+            analysis
+            onSelect={(run) => setSelectedId(run.id)}
+            selectedId={selectedId ?? undefined}
+          />
         ) : (
           <div className="empty-history">
             <SlidersHorizontal size={27} />
@@ -262,6 +254,13 @@ export function Analysis({ runs }: { runs: readonly Run[] }) {
           </div>
         )}
       </section>
+      {selectedId && filtered.find((run) => run.id === selectedId) && (
+        <RunDetailsPanel
+          key={`${periodKey}:${selectedId}`}
+          run={filtered.find((run) => run.id === selectedId)!}
+          onClose={() => setSelectedId(null)}
+        />
+      )}
       <div className="analysis-disclaimer">
         <strong>数値の見方</strong>
         <p>

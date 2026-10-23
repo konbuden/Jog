@@ -5,6 +5,16 @@
 `id: string`, `source: 'apple-health'`, `sourceId: string`, `startTime: string`, `endTime: string`, `distanceMeters: number`, `durationSeconds: number`, `averageHeartRateBpm: number | null`, `paceSecondsPerKm: number`, `importedAt: string`。
 追加でsourceName、device、元UTCオフセット、距離と心拍の取得根拠を保持する。日時はUTC ISO 8601、importedAtは保存確定時。
 
+## 追加指標とコース
+
+Run.detailsは省略可能。過去のRunをそのまま読み込める。歩数・ケイデンス（歩/分）・アクティブエネルギー（kcal）・ランニングパワー（W）・歩幅（m）・接地時間（ms）・上下動（cm）・最大心拍（bpm）・上昇高度（m）・屋内/屋外・Workout名・GPX参照パスを保存する。同じWorkout直下のWorkoutStatistics/MetadataEntryまたはWorkout属性のみを使い、独立Recordを結び付けない。対応単位以外、不正・曖昧な複数統計は欠損。追加指標は表示で「データなし」、保存ではプロパティを省略する。
+
+平均ケイデンスはRunningCadenceのaverageを優先。なければWorkout内StepCountのsum÷duration（分）を計算し、cadenceOriginで計算値を識別する。心拍の推定や補完はしない。消費エネルギーはActiveEnergyBurnedのsumを優先し、統計自体がなければWorkout.totalEnergyBurnedを使う。kJ/4.184→kcal、cm/100→m、s×1000→ms、m×100→cm、ft×0.3048→m。
+
+コースはWorkout直下WorkoutRoute内のFileReferenceを明示的根拠としてZIP内GPXに対応させる。時刻・ファイル名の類似で推定しない。ZIPのexport.xmlと同じフォルダを基準にパスを解決し、外部URL・親ディレクトリ参照を拒否する。XML単体ではコース座標を読まない。GPXのCRCと展開サイズを検証し、緯度±90・経度±180の有限値だけを受け付ける。不正・欠損GPXは警告し、そのラン自体は取り込む。一部だけ読めたコースはその旨を表示する。
+
+DBスキーマv2でroutes / stagingRoutesを追加。Runのidで対応付け、表示用の緯度経度を別テーブルに保存し、詳細画面でのみ読み込む。元のGPXは保存しない。各GPXは展開後20 MB、全GPX合計200 MB、1ラン8ファイル・64区間、参照を持つランは10,000件まで。GPS点は漸進的に間引いて約2,000点に制限し、trkseg/rteの切れ目を保つ。表示はローカルのSVG投影で、外部地図への座標送信なし。
+
 ## 日時
 
 Appleの`YYYY-MM-DD HH:mm:ss ±HHmm`または明示的オフセット付きISO日時を厳密に解析。オフセット欠損・不正日付・終了が開始より前の場合は対象ランを除外。端末のタイムゾーンに依存しない。
@@ -19,7 +29,7 @@ Appleの`YYYY-MM-DD HH:mm:ss ±HHmm`または明示的オフセット付きISO�
 ## 重複
 
 WorkoutにUUID等の明示的安定IDがある場合は出典と組み合わせる。なければ出典名・device・UTC開始終了・正規化距離・正規化durationからsourceIdを作る。正規化数値は小数点以下6桁で安定化。idはこのキーのSHA-256。
-心拍とimportedAtはキーに含めない。同一ファイル・重複エクスポートの同じランは追加しない。同じIDで内容が変わっている場合は既存値を保持し警告。別出典の同時刻ランは自動統合しない。同一Workoutの距離等が後で変更された場合、UUIDがないと別ランになり得る。
+心拍とimportedAtはキーに含めない。同一ファイル・重複エクスポートの同じランは追加しない。同じIDで距離・時間・心拍が変わっている場合は既存値を保持し警告。コア値が一致する再取り込みでは、未保存の追加指標・コースだけを保存確認後に補う。既存の追加指標・コースは上書きしない。詳細追加件数をプレビューし、キャンセルでは追加しない。別出典の同時刻ランは自動統合しない。同一Workoutの距離等が後で変更された場合、UUIDがないと別ランになり得る。
 
 ## 計算
 
@@ -30,7 +40,8 @@ WorkoutにUUID等の明示的安定IDがある場合は出典と組み合わせ�
 - 平均心拍 = 心拍取得済みランのdurationによる加重平均。取得件数を併記。
 - 心拍130台 = 130以上140未満。月次の帯内平均ペースも総時間 / 総距離km。
 - フィルタはAND。距離・心拍は下限を含み上限を含まない。心拍指定時はnullを除外。
-- 目標は月100km固定。達成率は100%超も数値表示。ゲージのみ100%で上限。
+- 両画面で単月・複数月（連続した開始月〜終了月）・全期間を選択。開始月〜終了月を両端含みで適用し、サマリー・グラフ・履歴に共通。期間は最大1,200か月。逆転・不正・超過はエラー表示。全期間はデータの最初〜最後の月、空の場合は当月。
+- 目標は月100km固定。複数月では100km×月数。達成率は100%超も数値表示。ゲージのみ100%で上限。
 - 丸めは表示時。計算には元の精度を使用。
 
 ## 欠損とエラー

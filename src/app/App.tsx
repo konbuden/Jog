@@ -4,7 +4,6 @@ import {
   Activity,
   ArrowUpRight,
   BarChart3,
-  CalendarDays,
   LayoutDashboard,
   LockKeyhole,
   ShieldCheck,
@@ -15,11 +14,23 @@ import { db } from '../infrastructure/db/database';
 import { monthKey } from '../domain/analytics/time';
 import { Dashboard } from '../pages/Dashboard';
 import { Analysis } from '../pages/Analysis';
+import { MonthSelector } from '../components/MonthSelector';
+import { selectPeriod, type MonthSelection } from '../domain/analytics/period';
 
 export function App() {
   const [importing, setImporting] = useState(false);
   const [analysis, setAnalysis] = useState(location.hash === '#/analysis');
-  const [month, setMonth] = useState(monthKey(new Date()));
+  const initialMonth = monthKey(new Date());
+  const [dashboardPeriod, setDashboardPeriod] = useState<MonthSelection>({
+    mode: 'single',
+    from: initialMonth,
+    through: initialMonth,
+  });
+  const [analysisPeriod, setAnalysisPeriod] = useState<MonthSelection>({
+    mode: 'all',
+    from: initialMonth,
+    through: initialMonth,
+  });
   const data = useLiveQuery(async () => {
     try {
       return { runs: await db.runs.orderBy('startTime').reverse().toArray(), error: null };
@@ -35,7 +46,11 @@ export function App() {
     // A live import in another tab owns this lock, so startup cleanup cannot erase its preview.
     void navigator.locks
       ?.request('my-running-coach-import', { ifAvailable: true }, async (lock) => {
-        if (lock) await db.staging.clear();
+        if (lock)
+          await db.transaction('rw', db.staging, db.stagingRoutes, async () => {
+            await db.staging.clear();
+            await db.stagingRoutes.clear();
+          });
       })
       .catch(() => {
         /* The regular data query provides the storage error UI. */
@@ -47,6 +62,8 @@ export function App() {
     addEventListener('hashchange', update);
     return () => removeEventListener('hashchange', update);
   }, []);
+  const period = analysis ? analysisPeriod : dashboardPeriod;
+  const selected = selectPeriod(data?.runs ?? [], period);
   return (
     <div className="app">
       <a
@@ -132,33 +149,37 @@ export function App() {
           <div className="loading-state" role="status">
             記録を読み込んでいます…
           </div>
-        ) : analysis ? (
-          <Analysis runs={data.runs} />
         ) : (
           <>
-            <div className="section-toolbar">
+            <div className="section-toolbar period-toolbar">
               <div>
-                <span className="section-kicker">ランニングの概要</span>
-                <span className="timezone-label">日本時間</span>
+                <span className="section-kicker">対象期間</span>
+                <span className="timezone-label">日本時間・開始月で集計</span>
               </div>
-              <label className="month-select">
-                <CalendarDays size={16} />
-                <span aria-hidden="true">
-                  {month.slice(0, 4)}年{Number(month.slice(5))}月
-                </span>
-                <input
-                  aria-label="表示月"
-                  type="month"
-                  value={month}
-                  min="1900-01"
-                  max="9999-12"
-                  onChange={(event) => {
-                    if (/^\d{4}-\d{2}$/.test(event.target.value)) setMonth(event.target.value);
-                  }}
-                />
-              </label>
+              <MonthSelector
+                value={period}
+                onChange={analysis ? setAnalysisPeriod : setDashboardPeriod}
+              />
             </div>
-            <Dashboard runs={data.runs} month={month} onImport={() => setImporting(true)} />
+            {selected.months.length === 0 && (
+              <p role="alert" className="error-message">
+                開始月は終了月以前にし、期間は100年以内で指定してください。
+              </p>
+            )}
+            {analysis ? (
+              <Analysis
+                runs={selected.runs}
+                months={selected.months}
+                periodKey={`${period.mode}:${selected.from}:${selected.through}`}
+              />
+            ) : (
+              <Dashboard
+                runs={selected.runs}
+                months={selected.months}
+                hasData={Boolean(data.runs.length)}
+                onImport={() => setImporting(true)}
+              />
+            )}
           </>
         )}
         <footer className="page-footer">

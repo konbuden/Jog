@@ -1,9 +1,10 @@
 import { ImportError } from './errors';
 import { Inflate } from 'fflate';
 import { HealthParser, identifyRun, type ParseReport } from './parser';
-import type { RunCandidate } from '../../domain/models/run';
+import type { RunCandidate, RunRoute } from '../../domain/models/run';
 import { IMPORT_EXPANDED_MAX_GB, IMPORT_FILE_MAX_MB, IMPORT_LIMITS } from './import-limits';
-import { zipMetadata } from './zip-metadata';
+import { zipMetadata, type ZipTarget } from './zip-metadata';
+import { GpxParser, routeEntryName } from './gpx';
 const crcTable = Uint32Array.from({ length: 256 }, (_, value) => {
   let crc = value;
   for (let bit = 0; bit < 8; bit++) crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
@@ -19,6 +20,7 @@ export async function importHealthFile(
   onBatch: (runs: RunCandidate[]) => Promise<void>,
   onProgress: (percent: number) => void = () => {},
   isCancelled: () => boolean = () => false,
+  onRoute: (route: RunRoute) => Promise<void> = async () => {},
 ): Promise<ParseReport> {
   const zip = /\.zip$/i.test(file.name),
     xml = /\.xml$/i.test(file.name);
@@ -27,6 +29,7 @@ export async function importHealthFile(
   if (file.size > IMPORT_LIMITS.fileBytes)
     throw new ImportError(`ZIP・XMLは${IMPORT_FILE_MAX_MB} MBまで対応しています。`);
   const metadata = zip ? await zipMetadata(file) : undefined;
+  const routes = new Map<string, { id: string; files: string[] }>();
   const pending: Parameters<typeof identifyRun>[0][] = [];
   const parser = new HealthParser((run) => pending.push(run));
   const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -46,7 +49,17 @@ export async function importHealthFile(
     if (isCancelled()) throw new ImportError('取り込みをキャンセルしました。');
     while (pending.length) {
       const batch = pending.splice(0, 100);
-      await onBatch(await Promise.all(batch.map(identifyRun)));
+      const candidates = await Promise.all(batch.map(identifyRun));
+      for (const run of candidates)
+        if (run.details?.routeFiles?.length) {
+          if (routes.has(run.id) || routes.size < 10_000)
+            routes.set(run.id, { id: run.id, files: run.details.routeFiles });
+          else {
+            const message = 'コースを含む記録は1回のインポートにつき10000件まで対応しています';
+            parser.report.warnings[message] = (parser.report.warnings[message] ?? 0) + 1;
+          }
+        }
+      await onBatch(candidates);
       if (isCancelled()) throw new ImportError('取り込みをキャンセルしました。');
     }
   };
@@ -74,5 +87,84 @@ export async function importHealthFile(
   parser.write(decoder.decode());
   const report = parser.finish();
   await flush();
+  const warn = (message: string) => {
+    report.warnings[message] = (report.warnings[message] ?? 0) + 1;
+  };
+  let routeBytes = 0;
+  for (const run of routes.values()) {
+    if (!metadata) {
+      warn('XML単体ではコースを読み込めません。GPXを含む元のZIPを再インポートしてください');
+      continue;
+    }
+    let combined: RunRoute | undefined;
+    let incomplete = false;
+    for (const reference of run.files) {
+      if (isCancelled()) throw new ImportError('取り込みをキャンセルしました。');
+      try {
+        const name = routeEntryName(metadata.name, reference);
+        if (!name) throw new ImportError('コース参照パスが不正です。');
+        const target = await zipMetadata(file, name);
+        routeBytes += target.size;
+        if (routeBytes > 200_000_000)
+          throw new ImportError('コース全体の展開量が200 MBを超えています。');
+        const route = await readRoute(file, target, run.id, isCancelled);
+        if (!combined) combined = route;
+        else {
+          if (combined.segments.length + route.segments.length > 64)
+            throw new ImportError('コース区間数が上限を超えています。');
+          combined.segments.push(...route.segments);
+          combined.pointCount += route.pointCount;
+          combined.sampled ||= route.sampled;
+        }
+      } catch (error) {
+        if (isCancelled()) throw error;
+        incomplete = true;
+        warn('一部のコースを読み込めませんでした（参照先なし・不正・容量超過など）');
+      }
+    }
+    if (combined) {
+      combined.incomplete = incomplete;
+      while (combined.segments.reduce((sum, s) => sum + s.length, 0) > 2200) {
+        combined.segments = combined.segments.map((s) =>
+          s.filter((_, i) => i === 0 || i === s.length - 1 || i % 2 === 0),
+        );
+        combined.sampled = true;
+      }
+      await onRoute(combined);
+    }
+  }
+  onProgress(100);
   return report;
+}
+
+async function readRoute(
+  file: Blob,
+  target: ZipTarget,
+  id: string,
+  isCancelled: () => boolean,
+): Promise<RunRoute> {
+  const parser = new GpxParser();
+  const decoder = new TextDecoder('utf-8', { fatal: true });
+  let expanded = 0,
+    crc = 0xffffffff;
+  const consume = (chunk: Uint8Array) => {
+    expanded += chunk.length;
+    if (expanded > 20_000_000 || expanded > target.size)
+      throw new ImportError('GPXの展開量が上限を超えています。');
+    crc = updateCrc(crc, chunk);
+    for (let offset = 0; offset < chunk.length; offset += 65536)
+      parser.write(decoder.decode(chunk.subarray(offset, offset + 65536), { stream: true }));
+  };
+  const inflate = target.compression === 8 ? new Inflate(consume) : undefined;
+  for (let offset = target.dataStart; offset < target.dataEnd; offset += 4096) {
+    if (isCancelled()) throw new ImportError('取り込みをキャンセルしました。');
+    const end = Math.min(offset + 4096, target.dataEnd);
+    const chunk = new Uint8Array(await file.slice(offset, end).arrayBuffer());
+    if (inflate) inflate.push(chunk, end === target.dataEnd);
+    else consume(chunk);
+  }
+  if (expanded !== target.size || (crc ^ 0xffffffff) >>> 0 !== target.crc)
+    throw new ImportError('GPXの整合性検証に失敗しました。');
+  parser.write(decoder.decode());
+  return parser.finish(id);
 }

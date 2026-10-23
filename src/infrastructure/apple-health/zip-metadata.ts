@@ -128,9 +128,26 @@ export interface ZipTarget {
 }
 
 /** Read bounded metadata and only the selected entry. No full archive or XML is retained. */
-export async function zipMetadata(file: Blob): Promise<ZipTarget> {
-  const location = await directoryLocation(file);
-  const bytes = await read(file, location.offset, location.size);
+const directories = new WeakMap<
+  Blob,
+  Promise<{
+    location: Awaited<ReturnType<typeof directoryLocation>>;
+    bytes: Uint8Array<ArrayBuffer>;
+  }>
+>();
+async function directory(file: Blob) {
+  let pending = directories.get(file);
+  if (!pending) {
+    pending = (async () => {
+      const location = await directoryLocation(file);
+      return { location, bytes: await read(file, location.offset, location.size) };
+    })();
+    directories.set(file, pending);
+  }
+  return pending;
+}
+export async function zipMetadata(file: Blob, requestedName?: string): Promise<ZipTarget> {
+  const { location, bytes } = await directory(file);
   const central = new DataView(bytes.buffer);
   const decoder = new TextDecoder();
   let position = 0;
@@ -162,7 +179,7 @@ export async function zipMetadata(file: Blob): Promise<ZipTarget> {
       central.getUint16(position + 34, true),
     );
     const name = decoder.decode(bytes.subarray(position + 46, position + 46 + nameLength));
-    if (isExport(name)) {
+    if (requestedName ? name === requestedName : isExport(name)) {
       if (target)
         throw new ImportError('export.xmlが複数あります。対象XMLを直接選択してください。');
       const flags = central.getUint16(position + 8, true);
@@ -170,8 +187,12 @@ export async function zipMetadata(file: Blob): Promise<ZipTarget> {
       const compression = central.getUint16(position + 10, true);
       if (compression !== 0 && compression !== 8)
         throw new ImportError('このZIP圧縮方式には対応していません。');
-      if (values.expanded > IMPORT_LIMITS.expandedXmlBytes)
-        throw new ImportError(`展開後のXMLが${IMPORT_EXPANDED_MAX_GB} GBを超えています。`);
+      if (values.expanded > (requestedName ? 20_000_000 : IMPORT_LIMITS.expandedXmlBytes))
+        throw new ImportError(
+          requestedName
+            ? 'コースファイルは展開後20 MBまで対応しています。'
+            : `展開後のXMLが${IMPORT_EXPANDED_MAX_GB} GBを超えています。`,
+        );
       target = {
         name,
         flags,

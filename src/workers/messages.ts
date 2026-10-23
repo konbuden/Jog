@@ -2,6 +2,7 @@ import type { ParseReport } from '../infrastructure/apple-health/parser';
 
 export interface ImportPreview extends ParseReport {
   newCount: number;
+  enhancedCount: number;
   duplicates: number;
   conflicts: number;
   firstTime: string | null;
@@ -12,6 +13,6 @@ export type ImportRequest =
 export type ImportResponse =
   | { type: 'progress'; percent: number }
   | { type: 'preview'; preview: ImportPreview }
-  | { type: 'complete'; added: number; duplicates: number; conflicts: number }
+  | { type: 'complete'; added: number; duplicates: number; conflicts: number; updated: number }
   | { type: 'error'; message: string }
   | { type: 'cancelled' };

@@ -1737,3 +1737,177 @@ h1 {
   outline: 2px solid var(--lime);
   outline-offset: 3px;
 }
+
+.period-toolbar {
+  align-items: flex-end;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.period-selector {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.period-selector label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.period-selector input,
+.period-selector select {
+  min-height: 42px;
+  color-scheme: dark;
+  border: 1px solid #354138;
+  border-radius: 9px;
+  padding: 9px 11px;
+  background: #18201a;
+  color: #edf3ec;
+  font: inherit;
+  max-width: 100%;
+}
+.period-separator {
+  padding-bottom: 12px;
+  color: #929e95;
+}
+.run-details {
+  margin: 26px 0;
+  scroll-margin-top: 24px;
+}
+.run-details .panel-heading {
+  align-items: start;
+}
+.run-details h2:focus {
+  outline: 2px solid #c1ed85;
+  outline-offset: 6px;
+}
+.route-card {
+  margin: 0 24px 24px;
+  border: 1px solid #354138;
+  border-radius: 12px;
+  padding: 18px;
+  background: #121a15;
+}
+.route-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 15px;
+  font-size: 14px;
+}
+.route-figure {
+  margin: 0;
+}
+.route-figure svg {
+  width: 100%;
+  max-height: 380px;
+  display: block;
+}
+.route-line {
+  fill: none;
+  stroke: #c1ed85;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.route-start {
+  fill: #c1ed85;
+  stroke: #142015;
+  stroke-width: 2;
+}
+.route-end {
+  fill: #fff;
+  stroke: #142015;
+  stroke-width: 2;
+}
+.route-figure figcaption {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #a1ada3;
+  margin-top: 12px;
+}
+.detail-metrics {
+  margin: 0 24px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1px;
+  background: #354138;
+  border: 1px solid #354138;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.detail-metrics > div {
+  padding: 16px;
+  background: #19211b;
+}
+.detail-metrics dt {
+  color: #a1ada3;
+  font-size: 11px;
+  margin-bottom: 9px;
+}
+.detail-metrics dd {
+  margin: 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.run-details > .notice,
+.detail-source {
+  margin: 20px 24px;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .period-selector {
+    width: 100%;
+  }
+  .period-selector label {
+    flex: 1;
+    min-width: 110px;
+  }
+  .period-separator {
+    display: none;
+  }
+  .route-card {
+    margin: 0 15px 18px;
+    padding: 12px;
+  }
+  .detail-metrics {
+    margin: 0 15px 18px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .detail-metrics dd {
+    font-size: 16px;
+  }
+}
+.period-month {
+  position: relative;
+  display: block;
+  min-height: 42px;
+  border: 1px solid #354138;
+  border-radius: 9px;
+  padding: 11px;
+  background: #18201a;
+  color: #edf3ec;
+  white-space: nowrap;
+}
+.period-selector .period-month input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  min-width: 0;
+}
+.period-month:focus-within {
+  outline: 2px solid #c1ed85;
+  outline-offset: 2px;
+}
+.run-detail-trigger {
+  min-height: 36px;
+  margin: 4px 0 0 37px;
+  font-size: 11px;
+}

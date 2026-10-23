@@ -4,6 +4,8 @@ import { calculatePace } from '../../domain/analytics/running';
 import { parseHealthDate } from '../../domain/analytics/time';
 import type { RunCandidate } from '../../domain/models/run';
 
+import { DETAIL_KEYS, DETAIL_TYPES, workoutDetails } from './workout-details';
+
 type Attributes = Record<string, string>;
 type UnhashedRun = Omit<RunCandidate, 'id'>;
 export interface ParseReport {
@@ -38,6 +40,9 @@ export class HealthParser {
     attrs: Attributes;
     stats: Attributes[];
     externalId?: string;
+    metadata: Attributes;
+    routeFiles: string[];
+    routeDepth?: number;
     depth: number;
   } | null = null;
   private depth = 0;
@@ -77,7 +82,7 @@ export class HealthParser {
       if (tag.name === 'Workout' && this.depth === 2) {
         if (attrs.workoutActivityType === 'HKWorkoutActivityTypeRunning') {
           this.report.runningCount++;
-          this.workout = { attrs, stats: [], depth: this.depth };
+          this.workout = { attrs, stats: [], metadata: {}, routeFiles: [], depth: this.depth };
         } else this.report.ignoredWorkouts++;
       } else if (this.workout && this.depth === this.workout.depth + 1) {
         if (
@@ -85,17 +90,31 @@ export class HealthParser {
           [
             'HKQuantityTypeIdentifierDistanceWalkingRunning',
             'HKQuantityTypeIdentifierHeartRate',
+            ...DETAIL_TYPES,
           ].includes(attrs.type ?? '')
         ) {
           if (this.workout.stats.length >= 16)
             throw new ImportError('Workoutの統計数が上限を超えています。');
           this.workout.stats.push(attrs);
         }
+        if (tag.name === 'WorkoutRoute') this.workout.routeDepth = this.depth;
+        if (tag.name === 'MetadataEntry' && DETAIL_KEYS.includes(attrs.key ?? ''))
+          this.workout.metadata[attrs.key!] = attrs.value ?? '';
         if (
           tag.name === 'MetadataEntry' &&
           ['HKMetadataKeyExternalUUID', 'HKExternalUUID'].includes(attrs.key ?? '')
         )
           this.workout.externalId = attrs.value;
+      }
+      if (
+        this.workout?.routeDepth &&
+        this.depth === this.workout.routeDepth + 1 &&
+        tag.name === 'FileReference' &&
+        attrs.path
+      ) {
+        if (this.workout.routeFiles.includes(attrs.path)) return;
+        if (this.workout.routeFiles.length < 8) this.workout.routeFiles.push(attrs.path);
+        else this.warn('1ランのコース参照は8ファイルまで対応しています');
       }
     });
     this.parser.on('closetag', (tag) => {
@@ -104,6 +123,8 @@ export class HealthParser {
         this.extract(this.workout);
         this.workout = null;
       }
+      if (this.workout?.routeDepth === this.depth && tag.name === 'WorkoutRoute')
+        this.workout.routeDepth = undefined;
       this.depth--;
     });
     this.parser.on('text', mark);
@@ -201,6 +222,7 @@ export class HealthParser {
       paceSecondsPerKm: calculatePace(distance, duration)!,
       distanceOrigin: totalDistance === null ? 'statistics' : 'workout',
       heartRateOrigin: heartRate === null ? null : 'workout-statistics',
+      details: workoutDetails(workout.stats, workout.metadata, a, duration, workout.routeFiles),
     });
   }
 }

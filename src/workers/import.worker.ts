@@ -1,5 +1,5 @@
 import { ImportError } from '../infrastructure/apple-health/errors';
-import { db, commitStaging, sameRun } from '../infrastructure/db/database';
+import { db, commitStaging, sameRun, canEnrich } from '../infrastructure/db/database';
 import { importHealthFile } from '../infrastructure/apple-health/import-file';
 import type { ImportRequest, ImportResponse } from './messages';
 
@@ -42,6 +42,9 @@ async function start(file: File) {
           );
         try {
           await db.staging.clear();
+          await db.stagingRoutes.clear();
+          const enhanced = new Set<string>(),
+            eligibleRoutes = new Set<string>();
           let duplicates = 0,
             conflicts = 0,
             newCount = 0;
@@ -57,11 +60,22 @@ async function start(file: File) {
                     firstTime === null || run.startTime < firstTime ? run.startTime : firstTime;
                   lastTime =
                     lastTime === null || run.startTime > lastTime ? run.startTime : lastTime;
-                  const existing = (await db.runs.get(run.id)) ?? (await db.staging.get(run.id));
+                  const existing = (await db.staging.get(run.id)) ?? (await db.runs.get(run.id));
                   if (existing) {
                     duplicates++;
                     if (!sameRun(existing, run)) conflicts++;
+                    else {
+                      if (run.details?.routeFiles?.length) eligibleRoutes.add(run.id);
+                      if (canEnrich(existing, run)) {
+                        await db.staging.put({
+                          ...run,
+                          details: { ...run.details, ...existing.details },
+                        });
+                        if (await db.runs.get(run.id)) enhanced.add(run.id);
+                      }
+                    }
                   } else {
+                    if (run.details?.routeFiles?.length) eligibleRoutes.add(run.id);
                     await db.staging.add(run);
                     newCount++;
                   }
@@ -75,6 +89,11 @@ async function start(file: File) {
               }
             },
             () => cancelled,
+            async (route) => {
+              if (!eligibleRoutes.has(route.id) || (await db.routes.get(route.id))) return;
+              await db.stagingRoutes.put(route);
+              if (await db.runs.get(route.id)) enhanced.add(route.id);
+            },
           );
           if (cancelled) {
             send({ type: 'cancelled' });
@@ -85,19 +104,28 @@ async function start(file: File) {
           });
           send({
             type: 'preview',
-            preview: { ...report, newCount, duplicates, conflicts, firstTime, lastTime },
+            preview: {
+              ...report,
+              newCount,
+              duplicates,
+              conflicts,
+              enhancedCount: enhanced.size,
+              firstTime,
+              lastTime,
+            },
           });
           if (await decision) {
             const result = await commitStaging();
             send({
               type: 'complete',
               ...result,
-              duplicates: duplicates + result.duplicates,
-              conflicts: conflicts + result.conflicts,
+              duplicates,
+              conflicts,
             });
           } else send({ type: 'cancelled' });
         } finally {
           await db.staging.clear();
+          await db.stagingRoutes.clear();
           decide = undefined;
         }
       },

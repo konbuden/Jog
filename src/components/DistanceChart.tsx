@@ -63,7 +63,11 @@ export function DistanceChart({
                   item.month === selectedMonth ? 'axis-label selected-label' : 'axis-label'
                 }
               >
-                {Number(item.month.slice(5))}月
+                {index % Math.max(1, Math.ceil(data.length / 8)) === 0 || index === data.length - 1
+                  ? data.length > 12
+                    ? item.month.replace('-', '/')
+                    : `${Number(item.month.slice(5))}月`
+                  : ''}
               </text>
             </g>
           );
