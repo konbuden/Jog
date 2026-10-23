@@ -2,6 +2,8 @@
 
 Apple Healthのランニングを日本語のダッシュボードと走力分析画面で振り返る、個人用Webアプリ。React / strict TypeScript / Vite / Dexieで構築しています。
 
+**公開アプリ：[My Running Coach](https://konbuden.github.io/Jog/)**
+
 ## 起動
 
 Node.js 24 LTS、npmを使用します。
@@ -84,14 +86,8 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --proj
 
 ワークフローは`dist/`だけをアップロードします。IndexedDBや元の健康情報は公開成果物に含まれません。独自ドメイン・別名リポジトリを使う場合はViteのbaseとテストURLも変更してください。
 
-### Pagesの設定
+### 公開状況
 
-1. [JogのPages設定](https://github.com/konbuden/Jog/settings/pages)を開きます。スマートフォンではSettingsメニューのCodespacesの下にPagesがあります。
-2. 「Build and deployment」の「Source」で **GitHub Actions** を選択します。
-3. mainへの反映後、Actionsの「Validate and deploy Pages」の結果を確認します。
+2026年10月23日14:09（日本時間）、GitHub Pagesへの公開が成功しました。利用者がリポジトリをPublicに設定し、Pagesを有効にした後、検証済みの成果物を公開しています。公開先は **https://konbuden.github.io/Jog/** です。
 
-Jogは現在非公開です。設定画面にUpgrade等が表示される場合、契約プランで非公開リポジトリのPagesが利用できない可能性があります。公開範囲は自動変更しません。利用可能な契約にするか、利用者が公開範囲を決める必要があります。
-
-GitHub接続でJogの管理・書き込み権限を確認済みです。環境のCLI認証は無効のため、接続済みGitHubツール経由でソースを反映します。トークンをチャットに貼る必要はありません。Pagesが有効になっている場合の標準公開先は`https://konbuden.github.io/Jog/`です。[検証実行](https://github.com/konbuden/Jog/actions/runs/39902487375)では、型検査・ビルド・整形チェック・単体テスト36件・大容量テスト1件・3ブラウザE2E 45件が成功しました。公開ジョブはPages未設定のNot Foundで停止しています。設定後は失敗した公開ジョブだけを再実行できます。公開URLの確認は未実施です。
-
-この実行環境ではPlaywrightの配布先`cdn.playwright.dev`および`playwright.download.prss.microsoft.com`への取得が通信ポリシーにより403 `Domain forbidden`となりました。制限を回避せず、残りのFirefox・WebKit検証はGitHub Actionsで行います。
+[GitHub Actionsの実行結果](https://github.com/konbuden/Jog/actions/runs/39902487375)：整形チェック・strict型検査・本番ビルド・単体テスト36件・大容量テスト1件・3ブラウザE2E 45件が成功し、deployジョブも成功しました。検証内容と制約は[validation-report.md](validation-report.md)に記載しています。

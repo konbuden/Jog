@@ -1,6 +1,6 @@
 # Release 0.1 検証記録
 
-最新結果：公開先`konbuden/Jog`へのコード反映済み。GitHub Actionsで型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功。公開処理のみPages未設定のため停止中。
+最新結果：**[My Running Coach](https://konbuden.github.io/Jog/)を公開済み**。2026年10月23日14:09（日本時間）にGitHub Pagesのdeployジョブが成功。型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功しています。
 
 実データは使用していません。すべて架空の合成記録です。2026-10-23、Node.js 24.19.0 / Linux / システムChromiumで検証。
 
@@ -14,7 +14,7 @@
 | T04 | src/pages/Dashboard.tsx、src/components/{DistanceChart,RunHistory,format}、App・CSS、dashboard.spec.ts                                              | Vitest 23件、Chromium E2E 5件、型検査・ビルド成功                 | 端末幅の追加検証はT06                                                                       |
 | T05 | src/pages/Analysis.tsx、src/components/PaceChart.tsx、App・CSS、analysis.spec.ts                                                                    | Vitest 23件、Chromium E2E 7件、型検査・ビルド成功                 | グラフは12か月、全記録はページング                                                          |
 | T06 | tests/e2e/quality.spec.ts、tests/performance/import.large.test.ts、合成XML生成、単体・DBテスト拡充、フォーカス・スキップリンク・CSP・数値解析の修正 | Vitest 28件、大容量1件、Chromium E2E 15件成功、型検査・ビルド成功 | ローカルのFirefox・WebKitは起動不可。3ブラウザ検証はT07のCIで成功。実機・全上限容量は未検証 |
-| T07 | README.md、.github/workflows/pages.yml、public/.nojekyll、仕様・検証記録                                                                            | 型検査・本番ビルド・Vitest 36件・3ブラウザE2E 45件成功            | Pagesの有効化待ち。実デプロイ・公開URL確認は未完了                                          |
+| T07 | README.md、.github/workflows/pages.yml、public/.nojekyll、仕様・検証記録                                                                            | 型検査・本番ビルド・Vitest 36件・3ブラウザE2E 45件成功            | Pagesへの公開成功。公開先の直接表示確認は通信制限により未実施                               |
 
 ## 必須ケース
 
@@ -43,17 +43,19 @@
 
 ## 最終状態
 
-検証対象コミット：[`9c06edc84ffc192997da8712cafa21f31cc91c96`](https://github.com/konbuden/Jog/commit/9c06edc84ffc192997da8712cafa21f31cc91c96)。GitHub Actionsの[実行39902487375](https://github.com/konbuden/Jog/actions/runs/39902487375)でverifyジョブ成功。
+検証対象コミット：[`9c06edc84ffc192997da8712cafa21f31cc91c96`](https://github.com/konbuden/Jog/commit/9c06edc84ffc192997da8712cafa21f31cc91c96)。GitHub Actionsの[実行39902487375](https://github.com/konbuden/Jog/actions/runs/39902487375)でverify・deployジョブ成功。
 
 - 整形チェック、strict型検査、本番ビルド成功
 - Vitest 36件成功
 - 100 MiB合成XML/ZIPの大容量テスト1件成功
 - Chromium 15件・Firefox 15件・WebKit 15件、合計45件成功
-- 検証済みのdist成果物をPages用にアップロード済み
+- 検証済みのdist成果物をGitHub Pagesへ公開済み
 
-公開先は利用者が指定した非公開リポジトリ`konbuden/Jog`。接続済みGitHubツール経由でmainへ反映した。アプリ名・パッケージ名を維持し、baseとテストURLは`/Jog/`へ変更。公開範囲は変更していない。
+公開先は利用者が指定した`konbuden/Jog`。接続済みGitHubツール経由でmainへ反映した。アプリ名・パッケージ名を維持し、baseとテストURLは`/Jog/`へ変更した。
 
-deployジョブは`actions/configure-pages@v5`で「Get Pages site failed」「Not Found」となった。GitHub Pagesの有効化とSourceのGitHub Actions設定が必要。非公開リポジトリでPagesが使えるかは契約プランに依存する。設定完了後は既存の検証済み成果物を使って公開ジョブを再実行できる。実デプロイ・公開URL確認は未完了。
+当初はPages未設定で公開ジョブが停止した。利用者がリポジトリをPublicに設定してPagesを有効にしたことを確認後、失敗した公開ジョブのみ再実行。実行39902487375のattempt 2、deployジョブ`120252090487`で、検証対象コミットの成果物が2026-10-23 05:09 UTC（14:09 JST）に公開成功した。GitHubのログに`Reported success!`と公開URL **https://konbuden.github.io/Jog/** が記録され、リポジトリの`has_pages: true`も確認した。
+
+この作業環境から公開URLへの直接HTTPSアクセスは通信ポリシーの403で制限されたため、公開先での実ブラウザ表示・取り込み確認は未実施。公開成功はGitHubのデプロイ結果で確認している。公開に使用した本番ビルドに対する3ブラウザE2Eは成功している。iPhone・iPad実機検証は未実施。
 
 以下は作業中の確認履歴。最新状態は本節を参照。
 
