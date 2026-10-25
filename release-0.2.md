@@ -41,3 +41,17 @@ package/画面を0.2.0に更新。ローカル検証後にkonbuden/Jogへ反映�
 ## リスク
 
 JSONの解析/書き出しはメモリを使うため容量制限とWorkerでUI応答を守る。端末ごとのメモリ/保存上限は保証しない。バックアップは平文なので利用者が保存先を選ぶ。期間/記録数/心拍取得数が違う比較は条件差を表示し、未知値を埋めない。目標変更は遡及適用で目標履歴は持たない。実機iPhone/iPadの検証はこの環境では未実施。
+
+## 完了状況
+
+| タスク | 主な変更ファイル/範囲                                         | 結果                                                                                                    |
+| ------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| S01    | release-0.2.md、architecture.md、data-specification.md        | 設計・上限・移行・リスクを明文化、整形チェック成功                                                      |
+| S02    | CalendarPanel、calendar.ts、Dashboard、CSS                    | 日別/週別/空日、月・週・年・うるう年境界、日付選択の検証成功                                            |
+| S03    | ComparisonPanel、comparison.ts、Analysis                      | 独立期間、共通条件、加重平均、欠損、ゼロ基準、期間重複・月数差の検証成功                                |
+| S04    | GoalSettings、GoalProgress、SettingsDialog、DB、DistanceChart | DB v3の既存記録保持、目標の検証・保存・再読込・グラフ連動成功                                           |
+| S05    | backup形式/サービス、backup.worker、SettingsDialog、gitignore | 実Workerの書き出し/別環境復元、再復元、目標選択、不正ファイル、キャンセル・排他・原子的ロールバック成功 |
+| S06    | 単体・DB・E2E・合成fixture、大容量テスト                      | 単体/DB 101件・大容量3件・3ブラウザE2E 84件、strict型検査・本番ビルド成功                               |
+| S07    | package/lock、App、README、validation-report.md               | 0.2.0へ更新、2026-10-25 21:09 JSTにPages公開成功                                                        |
+
+[検証・公開の実行結果](https://github.com/konbuden/Jog/actions/runs/40191272627)。実機iPhone/iPadと200 MBのバックアップJSON自体の実測は未実施。公開先の直接表示確認は作業環境の通信制限により未実施で、公開成功はGitHubのデプロイログで確認した。詳しくは[validation-report.md](validation-report.md)。
