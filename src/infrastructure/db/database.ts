@@ -1,3 +1,4 @@
+import type { GoalSettings } from '../../domain/models/goals';
 import Dexie, { type Table } from 'dexie';
 import type { Run, RunCandidate, RunRoute } from '../../domain/models/run';
 
@@ -8,10 +9,13 @@ export class RunningDatabase extends Dexie {
   routes!: Table<RunRoute, string>;
   stagingRoutes!: Table<RunRoute, string>;
 
+  settings!: Table<GoalSettings, string>;
+
   constructor(name = 'my-running-coach-v1') {
     super(name);
     this.version(1).stores({ runs: '&id,startTime', staging: '&id,startTime' });
     this.version(2).stores({ routes: '&id', stagingRoutes: '&id' });
+    this.version(3).stores({ settings: '&id' });
   }
 }
 

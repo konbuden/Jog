@@ -1,6 +1,6 @@
-# Release 0.1 検証記録
+# Release 0.2 検証記録
 
-最新結果：月選択・コース・追加指標の改定版を公開済み。単体/DB 71件・大容量3件・Chromium／Firefox／WebKitのE2E合計57件が成功し、2026年10月23日21:10（日本時間）にdeployジョブも成功しました。
+Release 0.1の最終結果：月選択・コース・追加指標の改定版を公開済み。単体/DB 71件・大容量3件・Chromium／Firefox／WebKitのE2E合計57件が成功し、2026年10月23日21:10（日本時間）にdeployジョブも成功しました。
 
 5 GB版の公開結果：ZIP 200 MB・展開後XML 5 GB対応版を公開済み。GitHub Actionsで単体61件・大容量3件・3ブラウザE2E 48件が成功し、2026年10月23日17:25（日本時間）にdeployジョブも成功しました。
 
@@ -9,6 +9,16 @@
 初回公開結果：**[My Running Coach](https://konbuden.github.io/Jog/)を公開済み**。2026年10月23日14:09（日本時間）にGitHub Pagesのdeployジョブが成功。型検査・ビルド・整形チェック、Vitest 36件、大容量テスト1件、Chromium・Firefox・WebKitのE2E合計45件が成功しています。
 
 実データは使用していません。すべて架空の合成記録です。2026-10-23、Node.js 24.19.0 / Linux / システムChromiumで検証。
+
+## Release 0.2：カレンダー・期間比較・目標・バックアップ
+
+仕様・設計・タスクS01〜S07・リスクをrelease-0.2.mdに記載。ダッシュボードに日別/週別カレンダー、分析に独立したA/B期間比較、共通設定に月/週/年目標とWorkerのJSON書き出し/追加復元を実装。DB v3で既存データを保持してsettingsを追加し、アプリ/パッケージを0.2.0に更新。
+
+変更：App・Dashboard・Analysis・DistanceChart・CSS、calendar/comparison純粋関数・GoalSettings、CalendarPanel・ComparisonPanel・SettingsDialog・GoalProgress、DB、backup形式/サービス・Worker/メッセージ、合成バックアップfixture・単体/DB/E2Eテスト、gitignore、package/lock、README・設計・データ仕様・本記録。
+
+ローカル結果：単体/DB 101件、Chromium E2E 28件、大容量3件、strict型検査・本番ビルドが成功。カレンダーの日付/週/年/うるう年境界・空日、比較の加重平均/欠損/ゼロ基準/重複期間、目標の入力/保存/再読み込み/グラフ連動、v2→v3移行、バックアップの実Worker生成→別コンテキストへの復元、コース/目標/importedAt保持、再復元の非重複、詳細追加/相違値保持/目標選択、原子的ロールバック、不正JSON/版/値/参照/容量、キャンセル・タブ排他・外部通信なしを確認。
+
+390/768/1440pxでカレンダー・比較・設定を検証し、画像で表示を確認した。最初の画面テストの目標入力セレクタが進捗ラベルにも部分一致したため、入力のラベル完全一致に修正。その後28件すべて成功。実機iPhone/iPad、200 MB上限のバックアップJSON自体の実測は未実施。バックアップは平文、クラウド同期/暗号化/置換復元は対象外。GitHubの3ブラウザ検証・公開はmain反映後に行う。
 
 ## 月選択・コース・追加指標の改定
 

@@ -12,6 +12,7 @@ import { filterRuns, monthlySummary, summarize } from '../domain/analytics/runni
 import { formatHeartRate, formatKm, formatPace } from '../components/format';
 import { PaceChart } from '../components/PaceChart';
 import { RunHistory } from '../components/RunHistory';
+import { ComparisonPanel } from '../features/comparison/ComparisonPanel';
 import { RunDetailsPanel } from '../features/run-details/RunDetailsPanel';
 
 const initial = { distance: 'all', heart: 'all', from: '', through: '' };
@@ -33,10 +34,12 @@ const heartBands: Record<string, RunFilter> = {
 
 export function Analysis({
   runs,
+  allRuns,
   months,
   periodKey,
 }: {
   runs: readonly Run[];
+  allRuns: readonly Run[];
   months: string[];
   periodKey: string;
 }) {
@@ -144,7 +147,7 @@ export function Analysis({
           </p>
         ) : (
           <p className="filter-hint">
-            すべてのグラフ・記録に条件を適用します。日付は日本時間、距離・心拍帯の上限は含みません。
+            推移グラフ・記録にすべての条件を適用します。期間比較には距離・心拍帯を共通適用します。日付は日本時間、距離・心拍帯の上限は含みません。
           </p>
         )}
       </section>
@@ -166,6 +169,12 @@ export function Analysis({
           </small>
         </span>
       </div>
+      <ComparisonPanel
+        key={periodKey}
+        runs={allRuns}
+        months={months}
+        filter={{ ...distanceBands[filters.distance], ...heartBands[filters.heart] }}
+      />
       <div className="section-toolbar">
         <div>
           <span className="section-kicker">ペースの変化</span>

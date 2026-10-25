@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LockKeyhole,
   ShieldCheck,
+  Settings,
   Upload,
 } from 'lucide-react';
 import { ImportDialog } from '../features/import/ImportDialog';
@@ -15,10 +16,13 @@ import { monthKey } from '../domain/analytics/time';
 import { Dashboard } from '../pages/Dashboard';
 import { Analysis } from '../pages/Analysis';
 import { MonthSelector } from '../components/MonthSelector';
+import { SettingsDialog } from '../features/settings/SettingsDialog';
+import { DEFAULT_GOALS } from '../domain/models/goals';
 import { selectPeriod, type MonthSelection } from '../domain/analytics/period';
 
 export function App() {
   const [importing, setImporting] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [analysis, setAnalysis] = useState(location.hash === '#/analysis');
   const initialMonth = monthKey(new Date());
   const [dashboardPeriod, setDashboardPeriod] = useState<MonthSelection>({
@@ -33,10 +37,15 @@ export function App() {
   });
   const data = useLiveQuery(async () => {
     try {
-      return { runs: await db.runs.orderBy('startTime').reverse().toArray(), error: null };
+      return {
+        runs: await db.runs.orderBy('startTime').reverse().toArray(),
+        goals: (await db.settings.get('goals')) ?? DEFAULT_GOALS,
+        error: null,
+      };
     } catch {
       return {
         runs: [],
+        goals: DEFAULT_GOALS,
         error:
           '保存領域を利用できません。ブラウザのプライベートモードや保存容量を確認してください。',
       };
@@ -120,7 +129,7 @@ export function App() {
             </span>
           </div>
           <div className="release-label">
-            MY RUNNING COACH <span>v0.1</span>
+            MY RUNNING COACH <span>v0.2</span>
           </div>
         </div>
       </aside>
@@ -135,10 +144,16 @@ export function App() {
                 : '一歩ずつ、自分のペースで。日々の積み重ねを振り返ろう。'}
             </p>
           </div>
-          <button className="primary-button" onClick={() => setImporting(true)}>
-            <Upload size={17} />
-            データをインポート
-          </button>
+          <div className="header-actions">
+            <button className="secondary-button" onClick={() => setSettingsOpen(true)}>
+              <Settings size={16} />
+              目標・バックアップ
+            </button>
+            <button className="primary-button" onClick={() => setImporting(true)}>
+              <Upload size={17} />
+              データをインポート
+            </button>
+          </div>
         </header>
         {data?.error && (
           <p role="alert" className="error-message">
@@ -168,6 +183,7 @@ export function App() {
             )}
             {analysis ? (
               <Analysis
+                allRuns={data.runs}
                 runs={selected.runs}
                 months={selected.months}
                 periodKey={`${period.mode}:${selected.from}:${selected.through}`}
@@ -177,6 +193,8 @@ export function App() {
                 runs={selected.runs}
                 months={selected.months}
                 hasData={Boolean(data.runs.length)}
+                allRuns={data.runs}
+                goals={data.goals}
                 onImport={() => setImporting(true)}
               />
             )}
@@ -193,6 +211,13 @@ export function App() {
           </span>
         </footer>
       </main>
+      {settingsOpen && (
+        <SettingsDialog
+          goals={data?.goals ?? DEFAULT_GOALS}
+          runs={data?.runs ?? []}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
       {importing && <ImportDialog onClose={() => setImporting(false)} />}
     </div>
   );

@@ -4,22 +4,29 @@ import type { Run } from '../domain/models/run';
 import { monthlySummary, summarize } from '../domain/analytics/running';
 import { DistanceChart } from '../components/DistanceChart';
 import { RunHistory } from '../components/RunHistory';
+import type { GoalSettings } from '../domain/models/goals';
+import { CalendarPanel } from '../features/calendar/CalendarPanel';
+import { GoalProgress } from '../features/settings/GoalProgress';
 import { formatDuration, formatKm, formatPace } from '../components/format';
 
 export function Dashboard({
   runs,
   months,
   hasData,
+  allRuns,
+  goals,
   onImport,
 }: {
   runs: readonly Run[];
   months: string[];
   hasData: boolean;
+  allRuns: readonly Run[];
+  goals: GoalSettings;
   onImport: () => void;
 }) {
   const series = useMemo(() => monthlySummary(runs, months), [runs, months]);
   const summary = useMemo(() => summarize(runs), [runs]);
-  const goalKm = Math.max(1, months.length) * 100;
+  const goalKm = Math.round(Math.max(1, months.length) * goals.monthlyDistanceKm * 10) / 10;
   const goalPercent = (summary.distanceMeters / (goalKm * 1000)) * 100;
   const single = months.length === 1;
   const circumference = 2 * Math.PI * 46;
@@ -142,7 +149,11 @@ export function Dashboard({
             </div>
             <span className="subtle-badge">{months.length}か月</span>
           </div>
-          <DistanceChart data={series} selectedMonth={months.at(-1) ?? ''} />
+          <DistanceChart
+            goalKm={goals.monthlyDistanceKm}
+            data={series}
+            selectedMonth={months.at(-1) ?? ''}
+          />
         </section>
         <section className="panel running-note">
           <div className="note-symbol">
@@ -162,6 +173,8 @@ export function Dashboard({
           </a>
         </section>
       </div>
+      <GoalProgress runs={allRuns} goals={goals} />
+      <CalendarPanel key={months.join(',')} runs={runs} months={months} />
       <section className="panel history-panel">
         <div className="panel-heading">
           <div>

@@ -4,13 +4,15 @@ import { formatKm } from './format';
 export function DistanceChart({
   data,
   selectedMonth,
+  goalKm = 100,
 }: {
   data: { month: string; distanceMeters: number; count: number }[];
   selectedMonth: string;
+  goalKm?: number;
 }) {
   const id = useId();
   const maxKm = Math.max(
-    100,
+    goalKm,
     Math.ceil(Math.max(...data.map((item) => item.distanceMeters / 1000), 0) / 25) * 25,
   );
   const left = 42,
@@ -75,8 +77,8 @@ export function DistanceChart({
         <line
           x1={left}
           x2="668"
-          y1={top + height - (100 / maxKm) * height}
-          y2={top + height - (100 / maxKm) * height}
+          y1={top + height - (goalKm / maxKm) * height}
+          y2={top + height - (goalKm / maxKm) * height}
           className="goal-line"
         />
       </svg>
@@ -87,7 +89,7 @@ export function DistanceChart({
         </span>
         <span>
           <i className="legend-dash" />
-          目標 100km
+          目標 {goalKm.toLocaleString('ja-JP')}km
         </span>
       </figcaption>
       <details className="chart-data">
