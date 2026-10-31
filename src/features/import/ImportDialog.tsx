@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, FileUp, ShieldCheck, X, AlertCircle } from 'lucide-react';
+import { Check, FileUp, ShieldCheck, X, AlertCircle, Trash2 } from 'lucide-react';
 import type { ImportPreview, ImportRequest, ImportResponse } from '../../workers/messages';
+import { DeleteImportedData } from './DeleteImportedData';
 import { formatDate } from '../../components/format';
 import {
   IMPORT_EXPANDED_MAX_GB,
@@ -11,8 +12,11 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const worker = useRef<Worker | null>(null);
   const [phase, setPhase] = useState<
-    'select' | 'parsing' | 'preview' | 'saving' | 'complete' | 'error'
+    'select' | 'parsing' | 'preview' | 'saving' | 'complete' | 'error' | 'delete' | 'deleted'
   >('select');
+  const [includeExistingDetails, setIncludeExistingDetails] = useState(false);
+  const [progressStage, setProgressStage] = useState<'fingerprint' | 'parsing'>('fingerprint');
+  const [deleting, setDeleting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [error, setError] = useState('');
@@ -33,7 +37,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   }, []);
   const send = (message: ImportRequest) => worker.current?.postMessage(message);
   const close = () => {
-    if (phase === 'saving') return;
+    if (phase === 'saving' || deleting) return;
     if (phase === 'parsing' || phase === 'preview') {
       setCancelling(true);
       send({ type: 'cancel' });
@@ -43,6 +47,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
     worker.current?.terminate();
     setFileName(file.name);
     setProgress(0);
+    setProgressStage('fingerprint');
     setPhase('parsing');
     setCancelling(false);
     try {
@@ -52,7 +57,10 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       worker.current = instance;
       instance.onmessage = (event: MessageEvent<ImportResponse>) => {
         const message = event.data;
-        if (message.type === 'progress') setProgress(message.percent);
+        if (message.type === 'progress') {
+          setProgress(message.percent);
+          setProgressStage(message.stage);
+        }
         if (message.type === 'preview') {
           setPreview(message.preview);
           setPhase('preview');
@@ -74,7 +82,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         setPhase('error');
         instance.terminate();
       };
-      send({ type: 'start', file });
+      send({ type: 'start', file, includeExistingDetails });
     } catch {
       setError('Web Workerを利用できません。最新のブラウザでお試しください。');
       setPhase('error');
@@ -97,7 +105,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
           className="icon-button"
           aria-label="閉じる"
           onClick={close}
-          disabled={phase === 'saving' || cancelling}
+          disabled={phase === 'saving' || deleting || cancelling}
         >
           <X size={20} />
         </button>
@@ -121,18 +129,45 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
               }}
             />
           </label>
+          <p className="import-mode-note">
+            新規記録だけを追加します。同じファイルと重複行は除外します。
+          </p>
+          <label className="import-detail-option">
+            <input
+              type="checkbox"
+              checked={includeExistingDetails}
+              onChange={(event) => setIncludeExistingDetails(event.target.checked)}
+            />
+            既存記録の不足詳細も追加する
+          </label>
           <details>
             <summary>Apple Healthからの書き出し方法</summary>
             <p>
               iPhoneの「ヘルスケア」→プロフィール→「すべてのヘルスケアデータを書き出す」でZIPを保存し、この画面で選択してください。
             </p>
           </details>
+          <button
+            className="text-button delete-entry"
+            onClick={() => {
+              setError('');
+              setPhase('delete');
+            }}
+          >
+            <Trash2 size={15} />
+            取り込み済みデータを全削除
+          </button>
         </>
       )}
       {phase === 'parsing' && (
         <div className="import-progress" role="status">
           <FileUp size={32} />
-          <strong>{cancelling ? 'キャンセルしています…' : 'データを解析しています…'}</strong>
+          <strong>
+            {cancelling
+              ? 'キャンセルしています…'
+              : progressStage === 'fingerprint'
+                ? 'ファイルの重複を確認しています…'
+                : 'データを解析しています…'}
+          </strong>
           <span className="file-name">{fileName}</span>
           <progress aria-label="解析の進捗" value={progress} max={100} />
           <span>{progress}%</span>
@@ -141,6 +176,11 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       {phase === 'preview' && preview && (
         <div className="import-preview">
           <h3>保存前の確認</h3>
+          {preview.fileAlreadyImported && (
+            <p className="notice">
+              このファイルは取り込み済みです。XML・ZIPの再解析と重複登録を省略しました。
+            </p>
+          )}
           <div className="preview-counts">
             <div>
               <strong>{preview.newCount}</strong>
@@ -156,10 +196,16 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
             </div>
           </div>
           <p>
-            対象期間：
+            ファイル内の期間：
             {preview.firstTime && preview.lastTime
               ? `${formatDate(preview.firstTime)} 〜 ${formatDate(preview.lastTime)}`
               : '有効なランニングなし'}
+          </p>
+          <p>
+            新規対象期間：
+            {preview.newFirstTime && preview.newLastTime
+              ? `${formatDate(preview.newFirstTime)} 〜 ${formatDate(preview.newLastTime)}`
+              : '追加対象なし'}
           </p>
           <p className="muted">
             ランニング {preview.runningCount}件を検出。他のワークアウト {preview.ignoredWorkouts}
@@ -207,10 +253,23 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         </div>
       )}
       {phase === 'saving' && <p role="status">記録を保存しています。このままお待ちください。</p>}
-      {phase === 'complete' && (
+      {phase === 'delete' && (
+        <DeleteImportedData
+          onCancel={() => {
+            setError('');
+            setPhase('select');
+          }}
+          onBusyChange={setDeleting}
+          onDeleted={(message) => {
+            setResult(message);
+            setPhase('deleted');
+          }}
+        />
+      )}
+      {(phase === 'complete' || phase === 'deleted') && (
         <div className="success-message" role="status">
           <Check size={32} />
-          <h3>インポートが完了しました</h3>
+          <h3>{phase === 'deleted' ? 'データを削除しました' : 'インポートが完了しました'}</h3>
           <p>{result}</p>
           <button className="primary-button" onClick={onClose}>
             記録を見る

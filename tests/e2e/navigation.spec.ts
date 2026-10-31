@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/test';
 
 test('2画面を移動できる', async ({ page }) => {
   await page.goto('./');

@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from '../helpers/test';
 import { zipSync, strToU8 } from 'fflate';
 import { baseXml, detailedXml, gpx } from '../fixtures/synthetic/details';
 import { isExternalRequest } from '../helpers/is-external-request';
@@ -9,8 +9,9 @@ const archive = () =>
       'apple_health_export/workout-routes/synthetic.gpx': strToU8(gpx),
     }),
   );
-async function startImport(page: Page, zip = false) {
+async function startImport(page: Page, zip = false, enrich = false) {
   await page.getByRole('button', { name: 'データをインポート', exact: true }).first().click();
+  if (enrich) await page.getByLabel('既存記録の不足詳細も追加する').check();
   await page.getByLabel('Apple Healthファイル').setInputFiles({
     name: zip ? 'synthetic.zip' : 'export.xml',
     mimeType: zip ? 'application/zip' : 'text/xml',
@@ -80,7 +81,7 @@ test('既存記録へ再インポートで詳細を追加し、キャンセル�
   await page.goto('./#/analysis');
   await startImport(page);
   await finishImport(page);
-  await startImport(page, true);
+  await startImport(page, true, true);
   await expect(
     page.getByText('既存の1件にコース・追加指標を補います。', { exact: false }),
   ).toBeVisible();
@@ -88,7 +89,7 @@ test('既存記録へ再インポートで詳細を追加し、キャンセル�
   await page.getByRole('button', { name: '2026/10/01の詳細' }).click();
   await expect(page.getByRole('img', { name: '選択したランニングのGPSコース' })).toHaveCount(0);
   await page.getByRole('button', { name: 'ランニング詳細を閉じる' }).click();
-  await startImport(page, true);
+  await startImport(page, true, true);
   await page.getByRole('button', { name: '0件を保存・1件の詳細を追加' }).click();
   await page.getByRole('button', { name: '記録を見る' }).click();
   await expect(page.getByTestId('matching-count')).toHaveText('2件のランニング');
@@ -97,6 +98,6 @@ test('既存記録へ再インポートで詳細を追加し、キャンセル�
   await page.reload();
   await page.getByRole('button', { name: '2026/10/01の詳細' }).click();
   await expect(page.getByRole('img', { name: '選択したランニングのGPSコース' })).toBeVisible();
-  await startImport(page, true);
+  await startImport(page, true, true);
   await expect(page.getByRole('button', { name: '0件を保存する' })).toBeDisabled();
 });

@@ -1,4 +1,6 @@
 import type { GoalSettings } from '../../domain/models/goals';
+import type { ImportReceipt } from './import-records';
+import { findRun } from './run-matching';
 import Dexie, { type Table } from 'dexie';
 import type { Run, RunCandidate, RunRoute } from '../../domain/models/run';
 
@@ -11,11 +13,18 @@ export class RunningDatabase extends Dexie {
 
   settings!: Table<GoalSettings, string>;
 
+  imports!: Table<ImportReceipt, string>;
+
   constructor(name = 'my-running-coach-v1') {
     super(name);
     this.version(1).stores({ runs: '&id,startTime', staging: '&id,startTime' });
     this.version(2).stores({ routes: '&id', stagingRoutes: '&id' });
     this.version(3).stores({ settings: '&id' });
+    this.version(4).stores({
+      runs: '&id,startTime,sourceId,[sourceName+startTime+endTime]',
+      staging: '&id,startTime,sourceId,[sourceName+startTime+endTime]',
+      imports: '&id',
+    });
   }
 }
 
@@ -74,7 +83,11 @@ export async function saveRuns(
   });
 }
 
-export async function commitStaging(database = db) {
+export async function commitStaging(
+  database = db,
+  includeExistingDetails = false,
+  receipt?: ImportReceipt,
+) {
   const importedAt = new Date().toISOString();
   return database.transaction(
     'rw',
@@ -82,36 +95,66 @@ export async function commitStaging(database = db) {
     database.staging,
     database.routes,
     database.stagingRoutes,
+    database.imports,
     async () => {
       let added = 0,
         duplicates = 0,
         conflicts = 0;
       const newIds = new Set<string>(),
-        updatedIds = new Set<string>();
+        updatedIds = new Set<string>(),
+        routeTargets = new Map<string, string>(),
+        rejected = new Set<string>();
       while (true) {
         const batch = await database.staging.limit(100).toArray();
         if (!batch.length) break;
         for (const candidate of batch) {
-          const existing = await database.runs.get(candidate.id);
-          if (!existing) newIds.add(candidate.id);
-          else if (canEnrich(existing, candidate)) updatedIds.add(candidate.id);
+          const existing = await findRun(database.runs, candidate);
+          if (existing) {
+            duplicates++;
+            if (!sameRun(existing, candidate)) {
+              conflicts++;
+              rejected.add(candidate.id);
+              continue;
+            }
+            if (!includeExistingDetails) rejected.add(candidate.id);
+            if (includeExistingDetails) {
+              if (canEnrich(existing, candidate)) {
+                await database.runs.put({
+                  ...existing,
+                  details: { ...candidate.details, ...existing.details },
+                });
+                updatedIds.add(existing.id);
+              }
+              routeTargets.set(candidate.id, existing.id);
+            }
+          } else {
+            await database.runs.add({ ...candidate, importedAt });
+            newIds.add(candidate.id);
+            routeTargets.set(candidate.id, candidate.id);
+            added++;
+          }
         }
-        const result = await saveRuns(database, batch, importedAt);
-        added += result.added;
-        duplicates += result.duplicates;
-        conflicts += result.conflicts;
         await database.staging.bulkDelete(batch.map((run) => run.id));
       }
       while (true) {
         const batch = await database.stagingRoutes.limit(50).toArray();
         if (!batch.length) break;
-        for (const route of batch)
-          if ((await database.runs.get(route.id)) && !(await database.routes.get(route.id))) {
-            await database.routes.add(route);
-            if (!newIds.has(route.id)) updatedIds.add(route.id);
+        for (const route of batch) {
+          const target =
+            routeTargets.get(route.id) ??
+            (!rejected.has(route.id) &&
+            includeExistingDetails &&
+            (await database.runs.get(route.id))
+              ? route.id
+              : undefined);
+          if (target && !(await database.routes.get(target))) {
+            await database.routes.add({ ...route, id: target });
+            if (!newIds.has(target)) updatedIds.add(target);
           }
+        }
         await database.stagingRoutes.bulkDelete(batch.map((route) => route.id));
       }
+      if (receipt) await database.imports.put(receipt);
       return { added, duplicates, conflicts, updated: updatedIds.size };
     },
   );

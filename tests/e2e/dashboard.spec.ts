@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../helpers/test';
 import { fileURLToPath } from 'node:url';
 const fixture = fileURLToPath(new URL('../fixtures/synthetic/export.xml', import.meta.url));
 

@@ -57,6 +57,7 @@ it('確定処理に失敗した場合は追加も一時削除もロールバッ�
       database.staging,
       database.routes,
       database.stagingRoutes,
+      database.imports,
       async () => {
         await commitStaging(database);
         throw new Error('synthetic failure');
@@ -71,7 +72,13 @@ it('確定処理に失敗した場合は追加も一時削除もロールバッ�
 
 it('複数バッチにまたがる確定でも既存データを保ち、すべての新規データを保存する', async () => {
   const database = createDatabase();
-  const runs = Array.from({ length: 201 }, (_, i) => syntheticRun({ id: `synthetic-${i}` }));
+  const runs = Array.from({ length: 201 }, (_, i) =>
+    syntheticRun({
+      id: `synthetic-${i}`,
+      startTime: new Date(Date.UTC(2026, 0, 1) + i * 3600000).toISOString(),
+      endTime: new Date(Date.UTC(2026, 0, 1) + i * 3600000 + 1800000).toISOString(),
+    }),
+  );
   await saveRuns(database, [runs[0]!]);
   await database.staging.bulkAdd(runs);
   expect(await commitStaging(database)).toEqual({

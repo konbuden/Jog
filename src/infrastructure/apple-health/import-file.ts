@@ -17,7 +17,7 @@ function updateCrc(crc: number, chunk: Uint8Array) {
 
 export async function importHealthFile(
   file: Blob & { name: string },
-  onBatch: (runs: RunCandidate[]) => Promise<void>,
+  onBatch: (runs: RunCandidate[]) => Promise<void | ReadonlyMap<string, string>>,
   onProgress: (percent: number) => void = () => {},
   isCancelled: () => boolean = () => false,
   onRoute: (route: RunRoute) => Promise<void> = async () => {},
@@ -50,16 +50,18 @@ export async function importHealthFile(
     while (pending.length) {
       const batch = pending.splice(0, 100);
       const candidates = await Promise.all(batch.map(identifyRun));
+      const selected = await onBatch(candidates);
       for (const run of candidates)
-        if (run.details?.routeFiles?.length) {
-          if (routes.has(run.id) || routes.size < 10_000)
-            routes.set(run.id, { id: run.id, files: run.details.routeFiles });
+        if (run.details?.routeFiles?.length && (selected === undefined || selected.has(run.id))) {
+          const target = selected?.get(run.id) ?? run.id;
+          if (routes.has(target)) continue;
+          if (routes.size < 10_000)
+            routes.set(target, { id: target, files: run.details.routeFiles });
           else {
             const message = 'コースを含む記録は1回のインポートにつき10000件まで対応しています';
             parser.report.warnings[message] = (parser.report.warnings[message] ?? 0) + 1;
           }
         }
-      await onBatch(candidates);
       if (isCancelled()) throw new ImportError('取り込みをキャンセルしました。');
     }
   };
