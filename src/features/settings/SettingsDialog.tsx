@@ -103,7 +103,7 @@ export function SettingsDialog({
         if (response.type === 'complete') {
           setPhase('done');
           setMessage(
-            `復元しました。追加${response.added}件・重複${response.duplicates}件・詳細追加${response.updated}件・コース追加${response.routesAdded}件。${response.conflicts ? `主要数値の相違${response.conflicts}件は既存値を保持しました。` : ''}${response.goalsRestored ? '目標設定も復元しました。' : '目標設定は変更していません。'}`,
+            `復元しました。追加${response.added}件・重複${response.duplicates}件・詳細追加${response.updated}件・コース追加${response.routesAdded}件・振り返り追加${response.reviewsAdded}件。${response.conflicts ? `主要数値の相違${response.conflicts}件は既存値を保持しました。` : ''}${response.goalsRestored ? '目標設定も復元しました。' : '目標設定は変更していません。'}`,
           );
           setPreview(null);
         }
@@ -304,7 +304,7 @@ export function SettingsDialog({
             </label>
           </div>
           <p className="muted backup-help">
-            書き出し対象はラン・追加指標・コース・目標設定。元のXML/ZIP/GPXは含めません。JSONは200
+            書き出し対象はラン・追加指標・コース・振り返り・目標設定。元のXML/ZIP/GPXは含めません。JSONは200
             MBまで対応します。iPhoneでプレビューされた場合は共有メニューから「ファイルに保存」を選択してください。
           </p>
           {phase === 'exporting' && (
@@ -333,6 +333,12 @@ export function SettingsDialog({
                 <div>
                   <dt>重複</dt>
                   <dd>{preview.duplicates}件</dd>
+                </div>
+                <div>
+                  <dt>振り返り（不足分を追加）</dt>
+                  <dd>
+                    {preview.newReviewCount}件 / 含まれる振り返り{preview.reviewCount}件
+                  </dd>
                 </div>
                 <div>
                   <dt>既存への詳細追加</dt>

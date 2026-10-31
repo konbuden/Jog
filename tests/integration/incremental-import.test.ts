@@ -202,7 +202,14 @@ it('全削除はラン・コース・取り込み履歴・一時データを消�
   });
   await database.settings.put({ ...DEFAULT_GOALS, monthlyDistanceKm: 50 });
   const counts = await importedCounts(database);
-  expect(counts).toEqual({ runs: 1, routes: 1, imports: 1, stagedRuns: 1, stagedRoutes: 1 });
+  expect(counts).toEqual({
+    runs: 1,
+    routes: 1,
+    imports: 1,
+    stagedRuns: 1,
+    stagedRoutes: 1,
+    reviews: 0,
+  });
   await clearImportedData(database, counts);
   expect(await importedCounts(database)).toEqual({
     runs: 0,
@@ -210,6 +217,7 @@ it('全削除はラン・コース・取り込み履歴・一時データを消�
     imports: 0,
     stagedRuns: 0,
     stagedRoutes: 0,
+    reviews: 0,
   });
   expect((await database.settings.get('goals'))?.monthlyDistanceKm).toBe(50);
   await stageImportRuns(database, [run]);
@@ -231,11 +239,15 @@ it('全削除の途中の失敗は全テーブルを復元する', async () => {
   await expect(
     database.transaction(
       'rw',
-      database.runs,
-      database.routes,
-      database.imports,
-      database.staging,
-      database.stagingRoutes,
+      [
+        database.runs,
+        database.runReviews,
+        database.routes,
+        database.imports,
+        database.staging,
+        database.stagingRoutes,
+      ],
+
       async () => {
         await clearImportedData(database, counts);
         throw new Error('synthetic failure');

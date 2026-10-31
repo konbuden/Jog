@@ -39,7 +39,7 @@ export function DeleteImportedData({
     try {
       const deleted = await deleteImportedWithLock(counts);
       onDeleted(
-        `ラン${deleted.runs}件・コース${deleted.routes}件と取り込み履歴・一時データを削除しました。目標設定は保持しています。元のZIPから再取り込みできます。`,
+        `ラン${deleted.runs}件・コース${deleted.routes}件・振り返り${deleted.reviews}件と取り込み履歴・一時データを削除しました。目標設定は保持しています。元のZIPから再取り込みできます。`,
       );
     } catch (cause) {
       setError(
@@ -65,7 +65,7 @@ export function DeleteImportedData({
         取り込み済みデータを全削除
       </h3>
       <p>
-        このブラウザに保存したすべてのラン・コース・取り込み履歴・一時データを削除します。元に戻せません。
+        このブラウザに保存したすべてのラン・コース・振り返り・取り込み履歴・一時データを削除します。元に戻せません。
       </p>
       <p className="muted">
         目標設定と端末に書き出したバックアップは残ります。必要な記録は先に「目標・バックアップ」から保存してください。他の端末・ブラウザのデータは削除しません。
@@ -79,6 +79,10 @@ export function DeleteImportedData({
           <div>
             <dt>コース</dt>
             <dd>{counts.routes.toLocaleString()}件</dd>
+          </div>
+          <div>
+            <dt>振り返り</dt>
+            <dd>{counts.reviews.toLocaleString()}件</dd>
           </div>
           <div>
             <dt>取り込み履歴</dt>

@@ -1,4 +1,4 @@
-# データ仕様 — Release 0.3.0
+# データ仕様 — Release 0.4.0
 
 ## Run
 
@@ -99,3 +99,13 @@ DB v4/Run/バックアップJSON v1を維持する。目標は現在の設定を
 10kmあたりの時間は`durationSeconds / distanceMeters * 10000`秒。共有表・詳細で同じ関数を使用し、レース予測や実際の10km区間タイムと区別する。
 
 参考評価は選択した1ランと、その前90日以内・別日・同じsourceName・距離±20%の記録から計算する。屋内外が双方で既知なら一致を要求。sourceName/開始/終了/距離/時間が等しいコピーは1件とする。心拍±5bpmでのペース順位と、ペース±15秒/kmでの心拍順位を使用し、各項目は心拍既知かつ3件以上でのみ採点する。同等範囲はペース±1秒/km、心拍±1bpm。項目の丸め前点数を均等平均して総合点を四捨五入する。採点不能な項目は重みから除外し、両方不可なら総合点null。根拠に対象値・比較中央値・件数・重みを表示し、結果は永続化しない。条件の詳細は[release-0.3.md](release-0.3.md)に記載。
+
+## Release 0.4：RunReviewと採点改定
+
+DB v5の`runReviews`は主キー`id`（Run ID）で、purpose（unknown/easy/steady/progressive/interval）、rpe（1〜10の整数またはnull）、lateIntent（unknown/ease/push/steady）、extraDistance（unknown/yes/no）、nextDay（unknown/normal/tired）、discomfort（unknown/none/present）、laps、updatedAt（UTC ISO）、revision（更新ごとに変更する識別子）を保持する。未入力はunknown/null/空配列で、推定しない。Workout内最高心拍と個人の最大心拍は別であり、余力の推定には使わない。
+
+本人入力の各lapはdistanceMeters>0、整数durationSeconds>0、averageHeartRateBpm（nullまたは正数〜300）、averagePowerWatts（nullまたは0〜3000）。最大100区間、各距離100km/時間24時間以下。全区間の距離/時間合計はWorkoutと整合させる。許容差は距離max(100m,2%)・時間max(30秒,5%)。全区間がないものを中盤/終盤分析に流用しない。元XMLから自動取得している区間ではなく、本人入力という出典を画面に示す。
+
+従来の順位点は廃止。10km以上の今回完走実績を100点の基準充足とし、10km未満から完走能力を推定しない。中盤20〜80%に中心がある2区間以上から距離加重CVを計算し100/(1+10CV)点。インターバルでは採点保留。余力の参考点はRPEから100(10−RPE)/9。申告の不一致/違和感では保留。3観点すべて既知の場合のみ40/30/30%で平均して総合点を丸める。不明を0点にしない。指標ごとの測定・申告・不明を明示し、翌日回復は翌日の本人申告だけで判断する。説明用の参考ルーブリックで、医学的妥当性を検証したモデルではない。
+
+振り返り入りバックアップJSON v2にreviews配列を追加。Run ID参照/重複/全値/ラップ整合/日時/revisionを検証し、不正があれば全体を拒否する。旧v1 JSONはreviewsなしで受理し、v2はreviews必須。振り返りがなければv1で出力する。既存振り返りを保持し、不足分だけ同一トランザクションで復元。保存済みランと主要数値が異なる場合、そのレビューも追加しない。全削除は振り返りも原子的に消去し、目標設定を残す。旧アプリはv2を拒否するため、振り返り入りの復元には本版以降を使用する。

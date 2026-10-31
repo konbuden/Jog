@@ -28,7 +28,7 @@ it.each([
     route = snapshot.routes[0]!;
   switch (kind) {
     case 'version':
-      Object.assign(snapshot, { version: 2 });
+      Object.assign(snapshot, { version: 99 });
       break;
     case 'format':
       Object.assign(snapshot, { format: 'other' });

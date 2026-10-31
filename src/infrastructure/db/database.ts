@@ -1,3 +1,4 @@
+import type { RunReview } from '../../domain/models/review';
 import type { GoalSettings } from '../../domain/models/goals';
 import type { ImportReceipt } from './import-records';
 import { findRun } from './run-matching';
@@ -14,6 +15,7 @@ export class RunningDatabase extends Dexie {
   settings!: Table<GoalSettings, string>;
 
   imports!: Table<ImportReceipt, string>;
+  runReviews!: Table<RunReview, string>;
 
   constructor(name = 'my-running-coach-v1') {
     super(name);
@@ -25,6 +27,7 @@ export class RunningDatabase extends Dexie {
       staging: '&id,startTime,sourceId,[sourceName+startTime+endTime]',
       imports: '&id',
     });
+    this.version(5).stores({ runReviews: '&id' });
   }
 }
 

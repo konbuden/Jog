@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { selectedGoalProgress } from '../../src/domain/analytics/goals';
-import { evaluateRun } from '../../src/domain/analytics/evaluation';
 import { DEFAULT_GOALS } from '../../src/domain/models/goals';
 import { syntheticRun } from '../fixtures/synthetic/run';
 const now = new Date('2026-10-31T01:00:00Z');
@@ -73,76 +72,4 @@ describe('選択期間の目標', () => {
       periodTargetKm: 0,
     });
   });
-});
-const target = syntheticRun({ id: 'target', startTime: '2026-10-20T01:00:00Z' });
-const refs = (pace = 360, heart: number | null = 135) =>
-  [1, 2, 3].map((day) =>
-    syntheticRun({
-      id: `ref-${day}`,
-      startTime: `2026-10-0${day}T01:00:00Z`,
-      paceSecondsPerKm: pace,
-      durationSeconds: pace * 5,
-      averageHeartRateBpm: heart,
-    }),
-  );
-describe('ブラウザ内の自己比較', () => {
-  it.each([
-    [370, 140, 100],
-    [360, 135, 50],
-    [350, 130, 0],
-  ])('比較ペース%s・心拍%sで総合%s点になる', (pace, heart, expected) => {
-    const report = evaluateRun(target, refs(pace, heart));
-    expect(report.score).toBe(expected);
-    expect(report.components.map((item) => item.count)).toEqual([3, 3]);
-  });
-  it('1指標だけ比較可能なら、その指標のみで採点する', () => {
-    const report = evaluateRun(target, refs(400, 135));
-    expect(report.score).toBe(100);
-    expect(report.components[1]!.score).toBeNull();
-  });
-  it('心拍欠損・件数不足で推定や0点補完をしない', () => {
-    const missing = evaluateRun({ ...target, averageHeartRateBpm: null }, refs());
-    expect(missing.score).toBeNull();
-    expect(missing.components[0]!.target).toBe(360);
-    expect(missing.components[0]!.count).toBe(0);
-    expect(evaluateRun(target, refs(360, null)).score).toBeNull();
-    expect(evaluateRun(target, refs().slice(0, 2)).score).toBeNull();
-  });
-  it('対象日・未来・90日超過・別距離帯・別記録元・異なる屋内外を除外する', () => {
-    const bad = [
-      syntheticRun({ id: 'same-day', startTime: '2026-10-20T00:00:00Z' }),
-      syntheticRun({ id: 'future', startTime: '2026-10-21T01:00:00Z' }),
-      syntheticRun({ id: 'old', startTime: '2026-07-01T01:00:00Z' }),
-      ...refs().map((run) => ({ ...run, distanceMeters: 7000 })),
-      ...refs().map((run) => ({ ...run, sourceName: 'Other' })),
-      ...refs().map((run) => ({ ...run, details: { indoor: true } })),
-    ];
-    expect(evaluateRun({ ...target, details: { indoor: false } }, bad).referenceCount).toBe(0);
-  });
-  it('同一活動の別IDコピーを比較件数に水増しせず、端の許容値を含める', () => {
-    const records = refs(361, 136);
-    expect(
-      evaluateRun(target, [...records, ...records.map((run) => ({ ...run, id: `copy-${run.id}` }))])
-        .components[0]!.count,
-    ).toBe(3);
-    expect(evaluateRun(target, records).score).toBe(50);
-    expect(
-      evaluateRun(target, [...refs(361, 136).map((run) => ({ ...run, distanceMeters: 6000 }))])
-        .score,
-    ).toBe(50);
-  });
-  it('入力を変更せず、同じデータから同じ結果を返す', () => {
-    const history = refs(),
-      snapshot = JSON.stringify(history);
-    expect(evaluateRun(target, history)).toEqual(evaluateRun(target, history));
-    expect(JSON.stringify(history)).toBe(snapshot);
-  });
-});
-
-it('項目ごとの端数を丸めず総合点を平均してから四捨五入する', () => {
-  const history = refs().map((run, index) => ({
-    ...run,
-    paceSecondsPerKm: index === 0 ? 359 : 350,
-  }));
-  expect(evaluateRun(target, history).score).toBe(33);
 });

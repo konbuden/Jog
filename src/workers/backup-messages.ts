@@ -15,6 +15,7 @@ export type BackupResponse =
       updated: number;
       conflicts: number;
       routesAdded: number;
+      reviewsAdded: number;
       goalsRestored: boolean;
     }
   | { type: 'error'; message: string }

@@ -38,11 +38,13 @@ export function Analysis({
   allRuns,
   months,
   periodKey,
+  monthlyGoalKm,
 }: {
   runs: readonly Run[];
   allRuns: readonly Run[];
   months: string[];
   periodKey: string;
+  monthlyGoalKm: number;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [evaluationId, setEvaluationId] = useState<string | null>(null);
@@ -279,6 +281,7 @@ export function Analysis({
       <EvaluationPanel
         key={`${periodKey}:${JSON.stringify(filters)}`}
         runs={filtered}
+        monthlyGoalKm={monthlyGoalKm}
         allRuns={allRuns}
         selectedId={evaluationId}
         onSelect={setEvaluationId}

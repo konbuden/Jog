@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Run } from '../../domain/models/run';
 import { formatKm, formatTime } from '../../components/format';
+import { EvaluationPanel } from '../evaluation/EvaluationPanel';
 import { RunDetailsPanel } from './RunDetailsPanel';
 
 export function RunDetailsDialog({
   runs,
   date,
+  allRuns,
+  monthlyGoalKm,
   onClose,
 }: {
   runs: readonly Run[];
   date: string;
+  allRuns: readonly Run[];
+  monthlyGoalKm: number;
   onClose: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -49,7 +54,11 @@ export function RunDetailsDialog({
         {runs.length > 1 && (
           <label>
             当日のランニング
-            <select value={run.id} onChange={(event) => setChosen(event.target.value)}>
+            <select
+              aria-label="当日のランニング"
+              value={run.id}
+              onChange={(event) => setChosen(event.target.value)}
+            >
               {runs.map((item) => (
                 <option key={item.id} value={item.id}>
                   {formatTime(item.startTime)}・{formatKm(item.distanceMeters)} km
@@ -60,6 +69,14 @@ export function RunDetailsDialog({
         )}
       </div>
       <RunDetailsPanel key={run.id} run={run} onClose={onClose} manageFocus={false} />
+      <EvaluationPanel
+        runs={runs}
+        allRuns={allRuns}
+        selectedId={run.id}
+        onSelect={setChosen}
+        monthlyGoalKm={monthlyGoalKm}
+        embedded
+      />
       <div className="dialog-actions">
         <button className="primary-button" onClick={onClose}>
           閉じてカレンダーに戻る

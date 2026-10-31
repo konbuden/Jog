@@ -129,7 +129,7 @@ export function App() {
             </span>
           </div>
           <div className="release-label">
-            MY RUNNING COACH <span>v0.3.0</span>
+            MY RUNNING COACH <span>v0.4.0</span>
           </div>
         </div>
       </aside>
@@ -186,6 +186,7 @@ export function App() {
                 allRuns={data.runs}
                 runs={selected.runs}
                 months={selected.months}
+                monthlyGoalKm={data.goals.monthlyDistanceKm}
                 periodKey={`${period.mode}:${selected.from}:${selected.through}`}
               />
             ) : (

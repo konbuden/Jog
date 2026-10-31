@@ -1,3 +1,5 @@
+import type { RunReview } from '../../domain/models/review';
+import { validateReview } from '../../domain/analytics/review';
 import type { Run, RunDetails, RunRoute } from '../../domain/models/run';
 import type { GoalSettings } from '../../domain/models/goals';
 import { validateGoals } from '../../domain/models/goals';
@@ -6,12 +8,13 @@ import { calculatePace } from '../../domain/analytics/running';
 export const BACKUP_LIMITS = { bytes: 200_000_000, runs: 100_000, routes: 10_000 };
 export interface BackupSnapshot {
   format: 'my-running-coach-backup';
-  version: 1;
+  version: 1 | 2;
   timeZone: 'Asia/Tokyo';
   exportedAt: string;
   runs: Run[];
   routes: RunRoute[];
   goals: GoalSettings;
+  reviews?: RunReview[];
 }
 const bad = () =>
   new Error(
@@ -161,8 +164,13 @@ export function validateSnapshot(value: unknown): BackupSnapshot {
   const input = record(value);
   if (input.format !== 'my-running-coach-backup')
     throw new Error('My Running CoachのバックアップJSONを選択してください。');
-  if (input.version !== 1)
+  if (input.version !== 1 && input.version !== 2)
     throw new Error('このバックアップ形式のバージョンには対応していません。');
+  if (
+    (input.version === 2 && !Array.isArray(input.reviews)) ||
+    (input.version === 1 && input.reviews !== undefined)
+  )
+    throw bad();
   if (input.timeZone !== 'Asia/Tokyo' || !Array.isArray(input.runs) || !Array.isArray(input.routes))
     throw bad();
   if (input.runs.length > BACKUP_LIMITS.runs || input.routes.length > BACKUP_LIMITS.routes)
@@ -178,13 +186,53 @@ export function validateSnapshot(value: unknown): BackupSnapshot {
     throw bad();
   return {
     format: 'my-running-coach-backup',
-    version: 1,
+    version: input.version,
     timeZone: 'Asia/Tokyo',
     exportedAt: iso(input.exportedAt),
     runs,
     routes,
     goals: parseGoalSettings(input.goals),
+    ...(input.reviews === undefined ? {} : { reviews: parseReviews(input.reviews, runs) }),
   };
+}
+function parseReviews(value: unknown, runs: Run[]): RunReview[] {
+  if (!Array.isArray(value) || value.length > runs.length) throw bad();
+  const byId = new Map(runs.map((run) => [run.id, run])),
+    seen = new Set<string>();
+  return value.map((item) => {
+    const input = record(item),
+      runId = id(input.id),
+      run = byId.get(runId);
+    if (!run || seen.has(runId) || !Array.isArray(input.laps) || input.laps.length > 100)
+      throw bad();
+    seen.add(runId);
+    const review: RunReview = {
+      id: runId,
+      purpose: text(input.purpose) as RunReview['purpose'],
+      rpe: input.rpe === null ? null : integer(input.rpe, 1, 10),
+      lateIntent: text(input.lateIntent) as RunReview['lateIntent'],
+      extraDistance: text(input.extraDistance) as RunReview['extraDistance'],
+      nextDay: text(input.nextDay) as RunReview['nextDay'],
+      discomfort: text(input.discomfort) as RunReview['discomfort'],
+      updatedAt: iso(input.updatedAt),
+      revision: text(input.revision, 100),
+      laps: input.laps.map((item) => {
+        const lap = record(item);
+        return {
+          distanceMeters: finite(lap.distanceMeters, Number.MIN_VALUE, 100000),
+          durationSeconds: integer(lap.durationSeconds, 1, 86400),
+          averageHeartRateBpm:
+            lap.averageHeartRateBpm === null
+              ? null
+              : finite(lap.averageHeartRateBpm, Number.MIN_VALUE, 300),
+          averagePowerWatts:
+            lap.averagePowerWatts === null ? null : finite(lap.averagePowerWatts, 0, 3000),
+        };
+      }),
+    };
+    if (!review.revision || validateReview(review, run)) throw bad();
+    return review;
+  });
 }
 export async function readBackup(file: Blob): Promise<BackupSnapshot> {
   if (file.size > BACKUP_LIMITS.bytes) throw new Error('バックアップは200 MBまで対応しています。');

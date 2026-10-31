@@ -99,11 +99,11 @@ test('カレンダーの複数ラン詳細は分析と同じ情報で、閉じ�
   await day.click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();
-  await dialog.getByLabel('当日のランニング').selectOption('a'.repeat(64));
+  await dialog.getByLabel('当日のランニング', { exact: true }).selectOption('a'.repeat(64));
   await expect(dialog.getByRole('img', { name: '選択したランニングのGPSコース' })).toBeVisible();
   const metrics = await dialog.locator('.detail-metrics').innerText();
-  await expect(dialog.getByLabel('当日のランニング')).toBeVisible();
-  await dialog.getByLabel('当日のランニング').selectOption('b'.repeat(64));
+  await expect(dialog.getByLabel('当日のランニング', { exact: true })).toBeVisible();
+  await dialog.getByLabel('当日のランニング', { exact: true }).selectOption('b'.repeat(64));
   await expect(dialog.locator('.detail-metrics')).toContainText('データなし');
   await expect(dialog.locator('.detail-metrics')).toContainText('50:00');
   await page.keyboard.press('Escape');
@@ -135,23 +135,25 @@ test('分析ボタンで根拠付きの点数を表示し、対象・フィル�
   await page.getByLabel('対象月の選択方法').selectOption('single');
   await page.getByLabel('表示月', { exact: true }).fill('2026-10');
   await page.getByRole('button', { name: '分析する', exact: true }).click();
-  await expect(page.getByTestId('evaluation-score')).toHaveText('100 / 100点');
+  await expect(page.getByTestId('evaluation-score')).toHaveText('評価保留（0/3観点）');
   const result = page.getByRole('region', { name: 'ランニングの分析結果' });
   for (const name of ['総括', '良い点', '悪い点・改善を確認する点', 'アドバイス'])
     await expect(result.getByRole('heading', { name, exact: true })).toBeVisible();
   await result.getByText('採点の根拠・比較条件', { exact: true }).click();
-  await expect(result.getByRole('table')).toContainText('100点・50%');
-  await expect(result).toContainText('比較対象 3件');
+  await expect(result.getByRole('table', { name: '同距離帯の推移と今回' })).toContainText(
+    '2026/09/01',
+  );
+  await expect(result).toContainText('過去記録3件');
   await page.getByLabel('平均心拍帯', { exact: true }).selectOption('zone130');
   await expect(result).toHaveCount(0);
   await page.getByRole('button', { name: '分析する', exact: true }).click();
-  await expect(page.getByTestId('evaluation-score')).toHaveText('100 / 100点');
+  await expect(page.getByTestId('evaluation-score')).toHaveText('評価保留（0/3観点）');
   await page.getByLabel('対象月の選択方法').selectOption('all');
   await expect(result).toHaveCount(0);
   await page.getByLabel('平均心拍帯', { exact: true }).selectOption('all');
   await page.getByLabel('分析対象のランニング').selectOption('1'.repeat(64));
   await page.getByRole('button', { name: '分析する', exact: true }).click();
-  await expect(page.getByTestId('evaluation-score')).toHaveText('採点不可');
+  await expect(page.getByTestId('evaluation-score')).toHaveText('評価保留（0/3観点）');
   expect(external).toEqual([]);
 });
 for (const width of [390, 768, 1440])
@@ -176,7 +178,7 @@ for (const width of [390, 768, 1440])
     await page.getByRole('button', { name: '閉じてカレンダーに戻る' }).click();
     await page.getByRole('link', { name: '走力分析', exact: true }).click();
     await page.getByRole('button', { name: '分析する', exact: true }).click();
-    await expect(page.getByTestId('evaluation-score')).toHaveText('採点不可');
+    await expect(page.getByTestId('evaluation-score')).toHaveText('評価保留（0/3観点）');
     await expect(page.getByRole('region', { name: 'ランニングの分析結果' })).toContainText(
       '平均心拍 データなし',
     );

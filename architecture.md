@@ -1,4 +1,4 @@
-# My Running Coach — Release 0.3.0
+# My Running Coach — Release 0.4.0
 
 ## 方針
 
@@ -85,3 +85,13 @@ DB v4ではruns/stagingにsourceId・sourceName/開始/終了の検索インデ�
 カレンダーの日付クリックは`RunDetailsDialog`を開き、分析と同じ`RunDetailsPanel`で情報を表示する。コースは従来どおり詳細時だけDBから取得。ネイティブdialogで背景操作を抑え、閉じる/ESCで元の位置・フォーカスへ戻す。10kmあたりの時間は共有表と詳細に追加する。
 
 `domain/analytics/evaluation.ts`はDB/UI/ネットワーク依存のない純粋関数で、本人の過去90日の比較と根拠を返す。`EvaluationPanel`は分析ボタンでのみ計算し、対象・条件・データ変更時に結果を破棄する。外部AI/API、DBへの評価保存、DBスキーマ変更はない。採点条件・不足時の扱いは[release-0.3.md](release-0.3.md)を参照。
+
+## Release 0.4：振り返りに基づく分析の共用
+
+`EvaluationPanel`をカレンダー詳細最下部と分析ページで共有し、対象Run ID・全保存履歴・設定月目標を渡す。埋め込み時は日付内のラン選択と連動する。`useId`と対象IDの読み込みガードで、ラベルの重複・前のランの振り返り表示を防ぐ。
+
+`domain/analytics/evaluation.ts`は順位採点を廃止し、実走距離・中盤ラップ・RPEを用いる3観点の分析、過去比較、観測と申告を区別した文章を返す。書式関数は`domain/format.ts`へ移し、UI層への依存をなくした。`review.ts`は全区間合計・値範囲を検証する。健康値や意図の補完はしない。
+
+DB v5に`runReviews`を追加し、Run IDに紐付く任意の振り返り・本人入力ラップ・更新日時・revisionを保存する。既存v4のラン/ID/目標/コース/取り込み履歴を保持する。`infrastructure/db/reviews.ts`は共有Web Lock・トランザクション・revision照合で、別タブや削除との競合を防ぐ。編集中の外部更新は黙って置換せず読み直しを求める。
+
+振り返り入りのバックアップをv2（reviews配列付き）で出力し、振り返りがなければv1を維持する。Workerで検証・確認後に不足分だけ追加し、既存振り返りや主要値が相違するランへの復元は行わない。全データ削除の原子的対象に振り返りを追加する。外部GPTへの接続やAIコーチは実装しない。仕様は[release-0.4.md](release-0.4.md)。

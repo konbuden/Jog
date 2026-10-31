@@ -4,7 +4,17 @@ import type { Run } from '../../domain/models/run';
 import { calendarWeeks } from '../../domain/analytics/calendar';
 import { RunDetailsDialog } from '../run-details/RunDetailsDialog';
 import { formatKm } from '../../components/format';
-export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: string[] }) {
+export function CalendarPanel({
+  runs,
+  allRuns,
+  monthlyGoalKm,
+  months,
+}: {
+  runs: readonly Run[];
+  allRuns: readonly Run[];
+  monthlyGoalKm: number;
+  months: string[];
+}) {
   const [chosen, setChosen] = useState(''),
     [selectedDate, setSelectedDate] = useState<string | null>(null),
     [popupOpen, setPopupOpen] = useState(false);
@@ -129,6 +139,8 @@ export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: 
             key={selectedDay.date}
             date={selectedDay.date}
             runs={selectedDay.runs}
+            allRuns={allRuns}
+            monthlyGoalKm={monthlyGoalKm}
             onClose={() => setPopupOpen(false)}
           />
         )}

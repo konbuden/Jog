@@ -1,6 +1,7 @@
 import { db, type RunningDatabase } from './database';
 export interface ImportedCounts {
   runs: number;
+  reviews: number;
   routes: number;
   imports: number;
   stagedRuns: number;
@@ -9,13 +10,17 @@ export interface ImportedCounts {
 export async function importedCounts(database: RunningDatabase = db): Promise<ImportedCounts> {
   return database.transaction(
     'r',
-    database.runs,
-    database.routes,
-    database.imports,
-    database.staging,
-    database.stagingRoutes,
+    [
+      database.runs,
+      database.runReviews,
+      database.routes,
+      database.imports,
+      database.staging,
+      database.stagingRoutes,
+    ],
     async () => ({
       runs: await database.runs.count(),
+      reviews: await database.runReviews.count(),
       routes: await database.routes.count(),
       imports: await database.imports.count(),
       stagedRuns: await database.staging.count(),
@@ -27,11 +32,14 @@ export async function importedCounts(database: RunningDatabase = db): Promise<Im
 export async function clearImportedData(database: RunningDatabase, expected: ImportedCounts) {
   return database.transaction(
     'rw',
-    database.runs,
-    database.routes,
-    database.imports,
-    database.staging,
-    database.stagingRoutes,
+    [
+      database.runs,
+      database.runReviews,
+      database.routes,
+      database.imports,
+      database.staging,
+      database.stagingRoutes,
+    ],
     async () => {
       const actual = await importedCounts(database);
       if (
@@ -40,6 +48,7 @@ export async function clearImportedData(database: RunningDatabase, expected: Imp
         )
       )
         throw new Error('データ件数が変わりました。削除対象を再確認してください。');
+      await database.runReviews.clear();
       await database.runs.clear();
       await database.routes.clear();
       await database.imports.clear();

@@ -174,7 +174,13 @@ export function Dashboard({
         </section>
       </div>
       <GoalProgress runs={allRuns} goals={goals} months={months} />
-      <CalendarPanel key={months.join(',')} runs={runs} months={months} />
+      <CalendarPanel
+        key={months.join(',')}
+        runs={runs}
+        allRuns={allRuns}
+        monthlyGoalKm={goals.monthlyDistanceKm}
+        months={months}
+      />
       <section className="panel history-panel">
         <div className="panel-heading">
           <div>
