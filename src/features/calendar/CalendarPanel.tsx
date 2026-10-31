@@ -83,7 +83,8 @@ export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: 
                           className={`calendar-day${day.count ? ' has-runs' : ''}`}
                           aria-label={`${day.date} ${day.count}回 ${formatKm(day.distanceMeters)}km`}
                           aria-pressed={selectedDate === day.date}
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.currentTarget.focus({ preventScroll: true });
                             setSelectedDate(day.date);
                             setPopupOpen(day.count > 0);
                           }}
