@@ -173,13 +173,13 @@ export function Dashboard({
           </a>
         </section>
       </div>
-      <GoalProgress runs={allRuns} goals={goals} />
+      <GoalProgress runs={allRuns} goals={goals} months={months} />
       <CalendarPanel key={months.join(',')} runs={runs} months={months} />
       <section className="panel history-panel">
         <div className="panel-heading">
           <div>
             <h2>最近のランニング</h2>
-            <p>対象期間の直近10回・日本時間</p>
+            <p>対象期間の直近10回・日本時間・10kmの時間は等速換算</p>
           </div>
           <a href="#/analysis" className="inline-link">
             すべての記録

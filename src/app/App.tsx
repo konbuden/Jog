@@ -129,7 +129,7 @@ export function App() {
             </span>
           </div>
           <div className="release-label">
-            MY RUNNING COACH <span>v0.2.1</span>
+            MY RUNNING COACH <span>v0.3.0</span>
           </div>
         </div>
       </aside>

@@ -35,7 +35,9 @@ export function RunHistory({
             <th>時間</th>
             <th>平均ペース</th>
             <th>平均心拍</th>
-            {analysis && <th>10km等速換算</th>}
+            <th>
+              10kmあたりの時間<small className="column-note">等速換算</small>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -81,9 +83,7 @@ export function RunHistory({
               <td className={run.averageHeartRateBpm === null ? 'missing-value' : ''}>
                 {formatHeartRate(run.averageHeartRateBpm)}
               </td>
-              {analysis && (
-                <td>{formatDuration(equivalent10Km(run.distanceMeters, run.durationSeconds))}</td>
-              )}
+              <td>{formatDuration(equivalent10Km(run.distanceMeters, run.durationSeconds))}</td>
             </tr>
           ))}
         </tbody>

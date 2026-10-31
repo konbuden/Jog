@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { X, MapPin } from 'lucide-react';
 import type { Run } from '../../domain/models/run';
+import { equivalent10Km } from '../../domain/analytics/running';
 import { db } from '../../infrastructure/db/database';
 import { routeGeometry } from '../../domain/analytics/route';
 import {
@@ -11,7 +12,16 @@ import {
   formatKm,
   formatPace,
 } from '../../components/format';
-export function RunDetailsPanel({ run, onClose }: { run: Run; onClose: () => void }) {
+export function RunDetailsPanel({
+  run,
+  onClose,
+  manageFocus = true,
+}: {
+  run: Run;
+  onClose: () => void;
+  manageFocus?: boolean;
+}) {
+  const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const result = useLiveQuery(async () => {
     try {
@@ -21,13 +31,14 @@ export function RunDetailsPanel({ run, onClose }: { run: Run; onClose: () => voi
     }
   }, [run.id]);
   useEffect(() => {
+    if (!manageFocus) return;
     const previous = document.activeElement;
     heading.current?.focus();
     heading.current?.scrollIntoView({ block: 'start' });
     return () => {
       if (previous instanceof HTMLElement && previous.isConnected) previous.focus();
     };
-  }, []);
+  }, [manageFocus]);
   const details = run.details ?? {};
   const geometry = result?.route ? routeGeometry(result.route) : [];
   const first = geometry[0]?.[0],
@@ -40,6 +51,10 @@ export function RunDetailsPanel({ run, onClose }: { run: Run; onClose: () => voi
     ['距離', `${formatKm(run.distanceMeters)} km`],
     ['時間', formatDuration(run.durationSeconds)],
     ['平均ペース', `${formatPace(run.paceSecondsPerKm)} /km`],
+    [
+      '10kmあたりの時間（等速換算）',
+      formatDuration(equivalent10Km(run.distanceMeters, run.durationSeconds)),
+    ],
     ['平均心拍', formatHeartRate(run.averageHeartRateBpm)],
     ['平均ケイデンス', value(details.averageCadenceSpm, '歩/分')],
     ['歩数', value(details.totalSteps, '歩', 0)],
@@ -53,11 +68,11 @@ export function RunDetailsPanel({ run, onClose }: { run: Run; onClose: () => voi
     ['走行環境', details.indoor === undefined ? 'データなし' : details.indoor ? '屋内' : '屋外'],
   ];
   return (
-    <section className="panel run-details" aria-labelledby="run-details-title">
+    <section className="panel run-details" aria-labelledby={titleId}>
       <div className="panel-heading">
         <div>
           <div className="eyebrow">RUN DETAILS</div>
-          <h2 id="run-details-title" ref={heading} tabIndex={-1}>
+          <h2 id={titleId} ref={heading} tabIndex={-1}>
             {formatDate(run.startTime)}のランニング詳細
           </h2>
           <p>{details.workoutName || '選択した記録の追加情報'}</p>

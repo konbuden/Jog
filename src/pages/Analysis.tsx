@@ -13,6 +13,7 @@ import { formatHeartRate, formatKm, formatPace } from '../components/format';
 import { PaceChart } from '../components/PaceChart';
 import { RunHistory } from '../components/RunHistory';
 import { ComparisonPanel } from '../features/comparison/ComparisonPanel';
+import { EvaluationPanel } from '../features/evaluation/EvaluationPanel';
 import { RunDetailsPanel } from '../features/run-details/RunDetailsPanel';
 
 const initial = { distance: 'all', heart: 'all', from: '', through: '' };
@@ -44,11 +45,13 @@ export function Analysis({
   periodKey: string;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [evaluationId, setEvaluationId] = useState<string | null>(null);
   const [filters, setFilters] = useState(initial);
   const [page, setPage] = useState(0);
   useEffect(() => {
     setPage(0);
     setSelectedId(null);
+    setEvaluationId(null);
   }, [periodKey]);
   const invalidDates = Boolean(filters.from && filters.through && filters.from > filters.through);
   const filtered = useMemo(
@@ -225,7 +228,10 @@ export function Analysis({
           <RunHistory
             runs={filtered.slice(safePage * 20, safePage * 20 + 20)}
             analysis
-            onSelect={(run) => setSelectedId(run.id)}
+            onSelect={(run) => {
+              setSelectedId(run.id);
+              setEvaluationId(run.id);
+            }}
             selectedId={selectedId ?? undefined}
           />
         ) : (
@@ -270,6 +276,13 @@ export function Analysis({
           onClose={() => setSelectedId(null)}
         />
       )}
+      <EvaluationPanel
+        key={`${periodKey}:${JSON.stringify(filters)}`}
+        runs={filtered}
+        allRuns={allRuns}
+        selectedId={evaluationId}
+        onSelect={setEvaluationId}
+      />
       <div className="analysis-disclaimer">
         <strong>数値の見方</strong>
         <p>

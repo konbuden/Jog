@@ -1,4 +1,4 @@
-# My Running Coach — Release 0.2.1
+# My Running Coach — Release 0.3.0
 
 ## 方針
 
@@ -16,6 +16,7 @@ React / strict TypeScript / Vite。日本語、ダークモード、スマート
 - `src/infrastructure/db`: Dexie、IndexedDB、一時領域、確定トランザクション
 - `src/infrastructure/apple-health`: SAX XML解析、ZIPストリーム、単位・日時変換
 - `src/features/run-details`: 追加指標・保存済みGPS軌跡の遅延読み込みと表示
+- `src/features/evaluation`: 対象ランの選択・ボタン実行・参考評価表示
 - `src/features/calendar`: 日別/週別カレンダーと日付選択
 - `src/features/comparison`: 独立した期間A/Bの比較
 - `src/features/settings`: 目標・バックアップの共通ダイアログと進捗
@@ -63,7 +64,7 @@ Vitestで計算・解析・DB、Playwrightで実Workerを使う取り込みと�
 
 DB v3でsettingsを追加し、v1/v2のRun・コース・IDを保持する。共通設定ダイアログで月間距離/任意の週間回数・年間距離を編集する。目標はuseLiveQueryから画面へ反映する。
 
-カレンダー・比較・目標進捗はdomainの純粋関数を利用。カレンダーは既存の対象月で絞り、比較は独立した月範囲に共通の距離帯/心拍帯を適用する。週/年進捗は今日を基準にして対象月とは別であることを表示し、日付変更や画面復帰時にも更新する。
+カレンダー・比較・目標進捗はdomainの純粋関数を利用。カレンダーは既存の対象月で絞り、比較は独立した月範囲に共通の距離帯/心拍帯を適用する。Release 0.3では月/週進捗は選択月に揃え、年間だけは日本時間の今年の全実績を使う。日付変更や画面復帰時にも更新する。
 
 バックアップ用Workerが一貫したDBスナップショットをJSON Blobにして返し、メイン画面で端末にダウンロードする。復元はFile→Worker→全体検証→追加/重複/相違/詳細追加の確認→確定→Run/コース/settingsを同じトランザクションで追加保存。元のimportedAtも保持。書き込みは取り込みと共通のWeb Lockで排他し、既存データの削除・自動アップロードはしない。
 
@@ -76,3 +77,11 @@ DB v4ではruns/stagingにsourceId・sourceName/開始/終了の検索インデ�
 通常の重複行はステージングとGPX対象に入れない。既存詳細の補完はチェックで選択したときのみ許可し、元のRun IDへGPXを対応付ける。同一IDの重複コース参照は先の行を優先する。指紋履歴は確定と同じトランザクションで保存し、正常な無変更入力だけは確認済み履歴のみキャッシュできる。
 
 全削除はインポート画面内で件数と不可逆性を示し、確認チェック後に実行。共通Web Lockを取得し、確認後の件数変化を拒否した上でruns/routes/imports/staging/stagingRoutesを原子的にclearする。settingsとダウンロード済みファイルは対象外。全削除で指紋も消すので同一ファイルからやり直せる。
+
+## Release 0.3：期間別目標・共通詳細・参考評価
+
+`domain/analytics/goals.ts`は全記録を1回走査して月距離/週回数/今年の距離を集計し、空月・部分週を含む進捗を返す。`GoalProgress`は目標値・達成月/週数・各期間の内訳を表示する。年間集計にはダッシュボードの対象月で絞る前の全記録を渡す。
+
+カレンダーの日付クリックは`RunDetailsDialog`を開き、分析と同じ`RunDetailsPanel`で情報を表示する。コースは従来どおり詳細時だけDBから取得。ネイティブdialogで背景操作を抑え、閉じる/ESCで元の位置・フォーカスへ戻す。10kmあたりの時間は共有表と詳細に追加する。
+
+`domain/analytics/evaluation.ts`はDB/UI/ネットワーク依存のない純粋関数で、本人の過去90日の比較と根拠を返す。`EvaluationPanel`は分析ボタンでのみ計算し、対象・条件・データ変更時に結果を破棄する。外部AI/API、DBへの評価保存、DBスキーマ変更はない。採点条件・不足時の扱いは[release-0.3.md](release-0.3.md)を参照。

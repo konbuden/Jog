@@ -22,3 +22,11 @@ export const formatDate = (value: string) =>
   }).format(new Date(value));
 export const formatHeartRate = (value: number | null) =>
   value === null ? 'データなし' : `${Math.round(value)} bpm`;
+
+export const formatTime = (value: string) =>
+  new Intl.DateTimeFormat('ja-JP', {
+    timeZone: 'Asia/Tokyo',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(new Date(value));

@@ -2,16 +2,18 @@ import { useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Run } from '../../domain/models/run';
 import { calendarWeeks } from '../../domain/analytics/calendar';
-import { RunHistory } from '../../components/RunHistory';
+import { RunDetailsDialog } from '../run-details/RunDetailsDialog';
 import { formatKm } from '../../components/format';
 export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: string[] }) {
   const [chosen, setChosen] = useState(''),
-    [selectedDate, setSelectedDate] = useState<string | null>(null);
+    [selectedDate, setSelectedDate] = useState<string | null>(null),
+    [popupOpen, setPopupOpen] = useState(false);
   const month = months.includes(chosen) ? chosen : (months.at(-1) ?? '');
   const index = months.indexOf(month);
   const weeks = useMemo(() => calendarWeeks(month, runs), [month, runs]);
   const selectedDay = weeks.flatMap((week) => week.dates).find((day) => day.date === selectedDate);
   const change = (value: string) => {
+    setPopupOpen(false);
     setChosen(value);
     setSelectedDate(null);
   };
@@ -81,7 +83,10 @@ export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: 
                           className={`calendar-day${day.count ? ' has-runs' : ''}`}
                           aria-label={`${day.date} ${day.count}回 ${formatKm(day.distanceMeters)}km`}
                           aria-pressed={selectedDate === day.date}
-                          onClick={() => setSelectedDate(day.date)}
+                          onClick={() => {
+                            setSelectedDate(day.date);
+                            setPopupOpen(day.count > 0);
+                          }}
                         >
                           <span>{Number(day.date.split('-').at(-1))}</span>
                           <strong>{day.count ? `${formatKm(day.distanceMeters)}` : '—'}</strong>
@@ -105,7 +110,7 @@ export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: 
         <p className="calendar-note">
           距離はkm。週計は月曜〜日曜のうち、上で選んだ対象期間内の記録だけを合計します。期間の端では部分週になります。「—」は記録なしを表し、休養の判定ではありません。
         </p>
-        {selectedDay && (
+        {selectedDay && selectedDay.count === 0 && (
           <div className="calendar-selection" aria-live="polite">
             <div className="calendar-selection-heading">
               <h3>
@@ -115,8 +120,16 @@ export function CalendarPanel({ runs, months }: { runs: readonly Run[]; months: 
                 日付の選択を解除
               </button>
             </div>
-            <RunHistory runs={selectedDay.runs} />
+            <p className="muted">この日のランニングはありません。</p>
           </div>
+        )}
+        {popupOpen && selectedDay && selectedDay.count > 0 && (
+          <RunDetailsDialog
+            key={selectedDay.date}
+            date={selectedDay.date}
+            runs={selectedDay.runs}
+            onClose={() => setPopupOpen(false)}
+          />
         )}
       </div>
     </section>

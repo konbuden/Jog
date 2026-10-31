@@ -2507,3 +2507,209 @@ h1 {
     justify-content: center;
   }
 }
+
+/* Selected-period goals, shared details dialog and local evaluation */
+.goal-scope-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 0 24px 20px;
+}
+.goal-scope-cards article {
+  min-width: 0;
+  padding: 18px;
+  background: #111512;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.goal-scope-cards h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+.goal-scope-cards p {
+  line-height: 1.8;
+  font-size: 13px;
+}
+.goal-scope-cards progress {
+  width: 100%;
+  accent-color: var(--lime);
+}
+.goal-breakdown {
+  padding: 0 24px 20px;
+}
+.goal-breakdown details + details {
+  margin-top: 16px;
+}
+.goal-breakdown summary,
+.evaluation-result summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.goal-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.goal-detail-table th,
+.goal-detail-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.goal-detail-table caption {
+  padding: 12px;
+  text-align: left;
+}
+.column-note {
+  display: block;
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.run-details-dialog {
+  color: #e9eee7;
+  background: #111512;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 0;
+  width: min(900px, calc(100% - 24px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.run-details-dialog::backdrop {
+  background: #000b;
+}
+.run-details-dialog .run-details {
+  margin: 0 16px;
+}
+.dialog-run-picker {
+  padding: 20px;
+}
+.dialog-run-picker h2 {
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+.dialog-run-picker label,
+.evaluation-controls label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+.dialog-actions {
+  padding: 16px;
+  position: sticky;
+  bottom: 0;
+  background: #111512;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+}
+.evaluation-panel {
+  margin-top: 24px;
+}
+.evaluation-controls {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  padding: 0 24px;
+}
+.evaluation-controls label {
+  flex: 1;
+  min-width: 0;
+}
+.evaluation-controls select {
+  width: 100%;
+  min-width: 0;
+}
+.evaluation-help,
+.evaluation-panel > .muted {
+  padding: 0 24px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+.evaluation-result {
+  margin: 0 24px 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.evaluation-result h3 {
+  font-size: 15px;
+  margin: 20px 0 6px;
+}
+.evaluation-result h3:first-child {
+  margin-top: 0;
+}
+.evaluation-score strong {
+  display: block;
+  font-size: 30px;
+}
+.evaluation-notes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.evaluation-result ul {
+  padding-left: 22px;
+}
+@media (max-width: 800px) {
+  .goal-scope-cards {
+    grid-template-columns: 1fr;
+  }
+  .evaluation-notes {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+@media (max-width: 500px) {
+  .goal-scope-cards,
+  .evaluation-controls {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .evaluation-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .evaluation-result {
+    margin: 0 12px 16px;
+    padding: 14px;
+  }
+  .goal-breakdown {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+.goal-scope-card > span,
+.goal-scope-card > strong,
+.goal-scope-card > b {
+  display: block;
+  margin-bottom: 10px;
+}
+.goal-scope-card > strong {
+  font-size: 28px;
+}
+.goal-scope-card > strong small {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: normal;
+}
+.settings-dialog .goal-scope-cards {
+  grid-template-columns: 1fr;
+}
+.evaluation-controls select,
+.dialog-run-picker select {
+  background: #18201a;
+  color: #edf3ec;
+  border: 1px solid #354138;
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 44px;
+  max-width: 100%;
+}

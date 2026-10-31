@@ -37,8 +37,10 @@ test('カレンダーで日別・週別の集計と空日を確認できる', as
   await page.getByLabel('表示月', { exact: true }).fill('2026-10');
   await expect(page.locator('.calendar-table tbody tr').first()).toContainText('11.0');
   await page.getByRole('button', { name: '2026-10-01 1回 5.0km', exact: true }).click();
-  await expect(page.locator('.calendar-selection .run-table tbody tr')).toHaveCount(1);
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.locator('dialog .detail-metrics')).toContainText('5.0 km');
   await expect(page.getByRole('heading', { name: '2026/10/01の記録（1回）' })).toBeVisible();
+  await page.getByRole('button', { name: '閉じてカレンダーに戻る' }).click();
   await page.getByRole('button', { name: '2026-10-02 0回 0.0km', exact: true }).click();
   await expect(page.getByRole('heading', { name: '2026/10/02の記録（0回）' })).toBeVisible();
   await expect(page.locator('.history-panel .run-table tbody tr')).toHaveCount(2);
