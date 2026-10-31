@@ -29,3 +29,11 @@ DB v5でrunReviewsテーブルを追加。既存Run/ID/目標/コースを維持
 ## 検証と公開
 
 順位最下位の0点回帰、10km未満/欠損/ラップなし、区間の加重/中盤抽出/意図的減速/加速、心拍上昇、RPE/申告不一致/翌日保留、未来/同日/重複を含む比較を単体テスト。DB v4→v5、保存/競合/バックアップ/全削除を検証。両画面とポップアップの分析一致、選択連動、編集時結果消去、保存と再読み込み、3幅/3ブラウザ、外部通信なしをE2Eで確認し、全テスト成功後にPagesへ公開する。
+
+## 実装・公開結果
+
+2026年10月31日22:45（日本時間）にRelease 0.4.0を公開。公開先：https://konbuden.github.io/Jog/ 。[GitHub Actions実行41206515921](https://github.com/konbuden/Jog/actions/runs/41206515921)で整形・strict型検査・本番ビルド・単体/DB 156件・大容量3件・Chromium/Firefox/WebKit各47件（合計141件）が成功し、deployもsuccess。公開コミットは`622c65ab4465e3715bb2d48e15fa795dc6b56507`。
+
+変更ファイル：`domain/analytics/evaluation.ts`と`review.ts`、RunReviewモデル、共通EvaluationPanel、CalendarPanel/RunDetailsDialog、Dashboard/Analysis/App、DB v5とreviews保存/削除、バックアップv1/v2の検証/Worker/設定UI、書式関数・CSS、合成fixture・単体/DB/E2E、設計/利用/検証文書。既存のラン・目標・コース・取り込み履歴は保持した。
+
+未対応：XMLからの区間ラップ自動抽出、外部GPT/AI接続、心拍による余力や最大心拍の推定。区間分析には本人入力ラップが必要。意図・体感・翌日状態は本人申告。不足観点は保留で、点数を推定しない。iPhone/iPad実機・公開先の直接表示は未検証。公開成功はGitHubのログで確認。

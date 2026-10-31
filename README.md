@@ -93,7 +93,7 @@ Release 0.2では次の4機能を追加しています。
 
 詳細な仕様・実装タスク・リスクは[release-0.2.md](release-0.2.md)、差分取り込み・全削除の仕様は[release-0.2.1.md](release-0.2.1.md)を参照してください。
 
-対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2Eを公開条件にしています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
+対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2E合計141件が成功しています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
 
 ## テスト
 
@@ -130,4 +130,4 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --proj
 
 公開先：**https://konbuden.github.io/Jog/**
 
-Release 0.4を検証中です。直前のRelease 0.3.0は[実行41203054280](https://github.com/konbuden/Jog/actions/runs/41203054280)で公開済み。最終検証と公開結果は完了後に更新します。
+2026年10月31日22:45（日本時間）、Release 0.4.0を公開しました。[GitHub Actions実行41206515921](https://github.com/konbuden/Jog/actions/runs/41206515921)で整形・strict型検査・本番ビルド・単体/DB 156件・大容量3件・Chromium/Firefox/WebKit各47件、合計141件が成功し、Pagesのdeployジョブも成功しました。カレンダー内分析、3観点と振り返り・区間ラップ、振り返り入りバックアップv2に対応しています。再読み込みで利用でき、記録の再インポートは不要です。詳細は[validation-report.md](validation-report.md)と[release-0.4.md](release-0.4.md)を参照してください。
