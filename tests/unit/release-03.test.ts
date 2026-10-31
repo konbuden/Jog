@@ -101,7 +101,10 @@ describe('ブラウザ内の自己比較', () => {
     expect(report.components[1]!.score).toBeNull();
   });
   it('心拍欠損・件数不足で推定や0点補完をしない', () => {
-    expect(evaluateRun({ ...target, averageHeartRateBpm: null }, refs()).score).toBeNull();
+    const missing = evaluateRun({ ...target, averageHeartRateBpm: null }, refs());
+    expect(missing.score).toBeNull();
+    expect(missing.components[0]!.target).toBe(360);
+    expect(missing.components[0]!.count).toBe(0);
     expect(evaluateRun(target, refs(360, null)).score).toBeNull();
     expect(evaluateRun(target, refs().slice(0, 2)).score).toBeNull();
   });

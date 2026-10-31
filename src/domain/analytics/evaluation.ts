@@ -93,7 +93,7 @@ export function evaluateRun(target: Run, history: readonly Run[]) {
   const components = [
     component(
       '同じ心拍帯でのペース',
-      heart === null ? null : target.paceSecondsPerKm,
+      target.paceSecondsPerKm,
       paceRefs.map((run) => run.paceSecondsPerKm),
       1,
       '秒/km',
