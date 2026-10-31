@@ -36,3 +36,11 @@ URL/対象月/カレンダー表示月を変更しない。閉じる/ESCで元�
 ## 検証と公開
 
 純粋関数で期間/年/週/月境界・部分週・空期間・未来/欠損・達成件数・100%超、評価の対象前後/90日/同日除外/比較条件/出典/重複/採点不足/同点/スコア/総括を検証する。Playwrightで目標値/進捗/対象月切替、単日/複数ランのポップアップ、閉じる/ESC/スクロール/フォーカス、両表の10km換算、分析ボタン/対象変更/不足/外部通信なし、390/768/1440pxを検証する。既存の取り込み・削除・バックアップ・200 MB/5 GBテストを維持し、3ブラウザ成功後にPagesへ公開する。
+
+## 実装・公開結果
+
+2026年10月31日22:02（日本時間）にRelease 0.3.0を公開。公開先：https://konbuden.github.io/Jog/ 。[GitHub Actions実行41203054280](https://github.com/konbuden/Jog/actions/runs/41203054280)で整形・strict型検査・本番ビルド・単体/DB 128件・大容量3件・Chromium/Firefox/WebKit各40件（合計120件）が成功し、deployジョブもsuccess。公開コミットは`b87ed4e4fd8c6e5ab49d2a53aa1304399f1ad065`。
+
+変更ファイルは目標/評価の純粋関数、GoalProgress、CalendarPanel、共有RunDetailsPanel/RunDetailsDialog、RunHistory、EvaluationPanel、Dashboard/Analysis、CSS、版番号、設計・検証文書と合成テスト。既存DB/データ/取り込み/削除/バックアップの方式は維持する。
+
+制約：部分週は対象範囲内だけで判定し、現在の目標を過去月にも適用する。点数は本人の過去記録内の参考順位で、比較不足・心拍欠損時は採点しない。iPhone/iPad実機と公開先の直接表示は未検証。公開成功はGitHubのログで確認した。

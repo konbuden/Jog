@@ -83,7 +83,7 @@ Release 0.2では次の4機能を追加しています。
 
 詳細な仕様・実装タスク・リスクは[release-0.2.md](release-0.2.md)、差分取り込み・全削除の仕様は[release-0.2.1.md](release-0.2.1.md)を参照してください。
 
-対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2Eを実行しています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
+対応API：Web Worker、Web Crypto、IndexedDB、Web Locks、dialog。モダンブラウザを想定しています。GitHub ActionsでChromium・Firefox・WebKitのE2E合計120件が成功しています。iPhone・iPad実機は未検証です。CIでは3ブラウザの成功を公開条件にしています。
 
 ## テスト
 
@@ -120,4 +120,4 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e -- --proj
 
 公開先：**https://konbuden.github.io/Jog/**
 
-Release 0.3はローカル検証中です。公開結果はGitHub Actions成功後に更新します。直前のRelease 0.2.1は[実行41195406693](https://github.com/konbuden/Jog/actions/runs/41195406693)で公開済みです。
+2026年10月31日22:02（日本時間）、期間別目標進捗・カレンダー詳細ポップアップ・両画面の10km換算・自己比較分析を含むRelease 0.3.0を公開しました。[GitHub Actionsの実行結果](https://github.com/konbuden/Jog/actions/runs/41203054280)：整形チェック・strict型検査・本番ビルド・単体/DB 128件・大容量3件・Chromium/Firefox/WebKit各40件、合計120件のE2Eとdeployジョブが成功しています。再読み込みで利用でき、記録の再インポートは不要です。詳しい検証結果は[validation-report.md](validation-report.md)を参照してください。
